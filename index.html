@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>모각코 커뮤니티</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+        }
+        /* 커스텀 스크롤바 */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+        /* 화면 전환 효과 */
+        .page {
+            display: none;
+        }
+        .page.active {
+            display: block;
+            animation: fadeIn 0.5s;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 28px;
+        }
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 28px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 20px;
+            width: 20px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        input:checked + .slider {
+            background-color: #2563eb;
+        }
+        input:checked + .slider:before {
+            transform: translateX(22px);
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+    <!-- 전체 컨테이너 -->
+    <div class="container mx-auto p-4 max-w-7xl">
+
+        <!-- 헤더 -->
+        <header class="flex justify-between items-center py-4 border-b border-gray-200">
+            <div class="flex items-center space-x-2 cursor-pointer" onclick="showPage('lobby')">
+                <span class="text-2xl font-bold text-blue-600"><i class="fas fa-laptop-code"></i> 모각코</span>
+            </div>
+            <nav class="hidden md:flex items-center space-x-6">
+                <a href="#" class="text-gray-600 hover:text-blue-600 font-medium" onclick="showPage('lobby')">모각코 찾기</a>
+                <a href="#" class="text-gray-600 hover:text-blue-600 font-medium" onclick="showPage('rankingPage')">랭킹</a>
+                <a href="#" class="text-gray-600 hover:text-blue-600 font-medium" onclick="showPage('myPage')">마이페이지</a>
+                <img src="https://placehold.co/40x40/A3BFFA/FFFFFF?text=P" alt="User Profile" class="w-10 h-10 rounded-full cursor-pointer hover:ring-2 hover:ring-blue-400" onclick="showPage('myPage')">
+            </nav>
+            <button class="md:hidden text-2xl" onclick="toggleMobileMenu()">
+                <i class="fas fa-bars"></i>
+            </button>
+        </header>
+
+        <!-- 모바일 메뉴 -->
+        <div id="mobileMenu" class="hidden md:hidden mt-4 bg-white rounded-lg shadow-md p-4">
+            <a href="#" class="block py-2 text-gray-600 hover:text-blue-600" onclick="showPage('lobby'); toggleMobileMenu();">모각코 찾기</a>
+            <a href="#" class="block py-2 text-gray-600 hover:text-blue-600" onclick="showPage('rankingPage'); toggleMobileMenu();">랭킹</a>
+            <a href="#" class="block py-2 text-gray-600 hover:text-blue-600" onclick="showPage('myPage'); toggleMobileMenu();">마이페이지</a>
+            <div class="border-t mt-4 pt-4">
+                 <div class="flex items-center space-x-3">
+                    <img src="https://placehold.co/40x40/A3BFFA/FFFFFF?text=P" alt="User Profile" class="w-10 h-10 rounded-full cursor-pointer" onclick="showPage('myPage'); toggleMobileMenu();">
+                    <div>
+                        <p class="font-semibold text-gray-800">지은</p>
+                        <a href="#" class="text-sm text-red-500 hover:underline">로그아웃</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- 메인 컨텐츠 -->
+        <main class="mt-8">
+
+            <!-- 로비 페이지 -->
+            <div id="lobby" class="page active">
+                <section class="text-center bg-white p-8 rounded-xl shadow-sm">
+                    <h1 class="text-4xl font-bold mb-4">함께하는 꾸준함, <span class="text-blue-600">성장을 만들다</span></h1>
+                    <p class="text-gray-600 max-w-2xl mx-auto mb-8">혼자서는 어려운 목표, 모각코에서 동료들과 함께 이루어보세요. 지금 바로 참여하고 즉시 몰입 환경을 경험할 수 있습니다.</p>
+                    <button class="bg-blue-600 text-white px-8 py-3 rounded-lg font-bold text-lg hover:bg-blue-700 transition transform hover:scale-105" onclick="openCreateRoomModal()">
+                        <i class="fas fa-plus mr-2"></i>모각코 만들기
+                    </button>
+                </section>
+
+                <section class="mt-12 p-6 bg-white rounded-xl shadow-sm">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+                        <div>
+                            <label for="searchInput" class="block text-sm font-medium text-gray-700 mb-1">방 제목으로 검색</label>
+                            <input type="text" id="searchInput" placeholder="알고리즘, 포트폴리오..." class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none">
+                        </div>
+                        <div class="flex items-center space-x-4 md:space-x-6 pt-5">
+                            <label class="flex items-center space-x-2 cursor-pointer">
+                                <input type="checkbox" id="micFilter" class="h-5 w-5 rounded text-blue-600 focus:ring-blue-500 border-gray-300">
+                                <span class="font-medium text-gray-700"><i class="fas fa-microphone text-gray-500 mr-1"></i>마이크</span>
+                            </label>
+                            <label class="flex items-center space-x-2 cursor-pointer">
+                                <input type="checkbox" id="camFilter" class="h-5 w-5 rounded text-blue-600 focus:ring-blue-500 border-gray-300">
+                                <span class="font-medium text-gray-700"><i class="fas fa-video text-gray-500 mr-1"></i>캠</span>
+                            </label>
+                            <label class="flex items-center space-x-2 cursor-pointer">
+                                <input type="checkbox" id="screenFilter" class="h-5 w-5 rounded text-blue-600 focus:ring-blue-500 border-gray-300">
+                                <span class="font-medium text-gray-700"><i class="fas fa-desktop text-gray-500 mr-1"></i>화면공유</span>
+                            </label>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="mt-8">
+                    <h2 class="text-2xl font-bold mb-6">모각코 목록 📚</h2>
+                    <div id="roomList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <!-- JS로 스터디방 목록이 동적으로 추가됩니다 -->
+                    </div>
+                </section>
+            </div>
+
+            <!-- 스터디방 페이지 -->
+            <div id="studyRoom" class="page"></div>
+
+            <!-- 마이페이지 -->
+            <div id="myPage" class="page"></div>
+
+            <!-- 랭킹 페이지 -->
+            <div id="rankingPage" class="page"></div>
+            
+            <!-- 사용자 프로필 페이지 -->
+            <div id="userProfilePage" class="page"></div>
+
+        </main>
+    </div>
+
+    <!-- 방 만들기 모달 -->
+    <div id="createRoomModal" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center hidden overflow-y-auto py-10"></div>
+    
+    <!-- 방 입장 모달 -->
+    <div id="joinRoomModal" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center hidden"></div>
+
+
+    <script>
+        // --- 초기 데이터 (서버 대신 사용) ---
+        const mockScreenImages = [
+            'https://placehold.co/400x225/2d3748/e2e8f0?text=VS+Code',
+            'https://placehold.co/400x225/1a202c/90cdf4?text=Illustrator',
+            'https://placehold.co/400x225/4a5568/f7fafc?text=Browser',
+            'https://placehold.co/400x225/38a169/f0fff4?text=Algorithm+Site'
+        ];
+
+        const allBadges = [
+            { id: 'b01', name: '꾸준함의 증표', icon: 'fa-medal', color: 'text-yellow-500', description: '7일 연속으로 스터디에 참여하세요.' },
+            { id: 'b02', name: '집중의 달인', icon: 'fa-star', color: 'text-indigo-500', description: '누적 50시간 이상 공부하세요.' },
+            { id: 'b03', name: '최고의 동료', icon: 'fa-users', color: 'text-teal-500', description: '5개 이상의 스터디에 참여하세요.' },
+            { id: 'b04', name: '얼리버드', icon: 'fa-sun', color: 'text-orange-400', description: '오전 6시 ~ 9시 사이에 5회 이상 참여하세요.' },
+            { id: 'b05', name: '나이트 아울', icon: 'fa-moon', color: 'text-purple-500', description: '오후 11시 이후에 5회 이상 참여하세요.' },
+            { id: 'b06', name: '방장', icon: 'fa-flag', color: 'text-red-500', description: '스터디방을 3회 이상 개설하세요.' },
+        ];
+
+        let rooms = [];
+        let users = [
+            { name: '동욱', totalStudyTime: 250.5, avatar: 'https://placehold.co/40x40/FFC107/FFFFFF?text=D', acquiredBadges: ['b01', 'b02', 'b03', 'b05', 'b06'] },
+            { name: '지은', totalStudyTime: 128.2, avatar: 'https://placehold.co/40x40/A3BFFA/FFFFFF?text=P', acquiredBadges: ['b01', 'b02'] },
+            { name: '유림', totalStudyTime: 195.8, avatar: 'https://placehold.co/40x40/4CAF50/FFFFFF?text=Y', acquiredBadges: ['b02', 'b03', 'b04'] },
+            { name: '수연', totalStudyTime: 310.1, avatar: 'https://placehold.co/40x40/F44336/FFFFFF?text=S', acquiredBadges: ['b01', 'b02', 'b03', 'b04', 'b05', 'b06'] },
+            { name: '민준', totalStudyTime: 95.3, avatar: 'https://placehold.co/40x40/9C27B0/FFFFFF?text=M', acquiredBadges: ['b02', 'b04'] },
+        ];
+
+        function initializeRooms() {
+            rooms = [
+                // UPDATED: '집중 중' 상태 데이터 추가
+                { id: 1, title: '알고리즘 집중 50분방', tags: ['코딩테스트', '알고리즘'], members: 3, maxMembers: 6, isPrivate: false, password: null, focusTime: 50, restTime: 10, rules: { mic: true, cam: false, screen: true }, participants: ['동욱', '수연', '민준'], scheduledTime: null, timerState: 'running', isFocusSession: true, timerCurrentTime: 35 * 60 + 10 },
+                { id: 2, title: '아트 포트폴리오 작업방', tags: ['일러스트', '포트폴리오'], members: 4, maxMembers: 8, isPrivate: false, password: null, focusTime: 90, restTime: 15, rules: { mic: false, cam: false, screen: true }, participants: ['유림', '현우', '다은', '서준'], scheduledTime: null, timerState: 'stopped', isFocusSession: true, timerCurrentTime: 90 * 60 },
+                { id: 3, title: 'FE 포트폴리오 스터디 (고정)', tags: ['프론트엔드', 'React'], members: 2, maxMembers: 4, isPrivate: true, password: '1234', focusTime: 25, restTime: 5, rules: { mic: true, cam: true, screen: true }, participants: ['지훈', '예진'], scheduledTime: null, timerState: 'stopped', isFocusSession: true, timerCurrentTime: 25 * 60 },
+                { id: 4, title: '저녁 코딩 챌린지', tags: ['코딩', '챌린지'], members: 1, maxMembers: 10, isPrivate: false, password: null, focusTime: 60, restTime: 10, rules: { mic: false, cam: false, screen: true }, participants: ['선아'], scheduledTime: '18:00', timerState: 'stopped', isFocusSession: true, timerCurrentTime: 60 * 60 },
+                { id: 5, title: 'CS 스터디', tags: ['CS', '면접준비'], members: 1, maxMembers: 5, isPrivate: false, password: null, focusTime: 45, restTime: 10, rules: { mic: true, cam: false, screen: false }, participants: ['재성'], scheduledTime: null, timerState: 'running', isFocusSession: true, timerCurrentTime: 15 * 60 + 30 },
+                { id: 6, title: '디자인 시스템 스터디', tags: ['디자인', 'UI/UX'], members: 5, maxMembers: 5, isPrivate: false, password: null, focusTime: 50, restTime: 10, rules: { mic: true, cam: true, screen: true }, participants: ['하윤', '도현', '지아', '시우', '서아'], scheduledTime: null, timerState: 'stopped', isFocusSession: true, timerCurrentTime: 50 * 60 },
+            ];
+        }
+
+        let currentRoom = null;
+        let previousPageId = 'lobby';
+        
+        // --- 페이지 렌더링 함수 ---
+        function renderRooms() {
+            const roomListEl = document.getElementById('roomList');
+            if (!roomListEl) return;
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const micFilter = document.getElementById('micFilter').checked;
+            const camFilter = document.getElementById('camFilter').checked;
+            const screenFilter = document.getElementById('screenFilter').checked;
+            const filteredRooms = rooms.filter(r => {
+                const titleMatch = r.title.toLowerCase().includes(searchTerm);
+                const micMatch = !micFilter || r.rules.mic;
+                const camMatch = !camFilter || r.rules.cam;
+                const screenMatch = !screenFilter || r.rules.screen;
+                return titleMatch && micMatch && camMatch && screenMatch;
+            });
+            roomListEl.innerHTML = '';
+            if (filteredRooms.length === 0) {
+                roomListEl.innerHTML = `<p class="text-gray-500 col-span-full text-center">조건에 맞는 스터디방이 없습니다.</p>`;
+                return;
+            }
+            filteredRooms.forEach(room => {
+                const isFull = room.members >= room.maxMembers;
+                const rulesHtml = `<div class="flex items-center space-x-3 text-gray-500 mt-4"><span class="${room.rules.mic ? 'text-blue-600' : 'text-gray-300'}" title="마이크 필수"><i class="fas fa-microphone"></i></span><span class="${room.rules.cam ? 'text-blue-600' : 'text-gray-300'}" title="캠 필수"><i class="fas fa-video"></i></span><span class="${room.rules.screen ? 'text-blue-600' : 'text-gray-300'}" title="화면공유 필수"><i class="fas fa-desktop"></i></span></div>`;
+                let statusHtml = '';
+                if (isFull) { statusHtml = `<span class="text-sm font-bold text-red-500">❌ 참여 불가</span>`; } 
+                else if (room.scheduledTime) { statusHtml = `<span class="text-sm font-bold text-indigo-600"><i class="far fa-clock mr-1"></i> 오늘 ${room.scheduledTime} 시작 예정</span>`; } 
+                else if (room.timerState === 'running') { statusHtml = `<span class="text-sm font-bold text-orange-500">🔥 집중 중</span>`; } 
+                else { statusHtml = `<span class="text-sm font-bold text-green-500">✅ 참여 가능</span>`; }
+                const roomCard = `<div class="bg-white p-6 rounded-xl shadow-sm hover:shadow-lg transition transform hover:-translate-y-1 flex flex-col justify-between relative ${isFull ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}" onclick="${isFull ? '' : `openJoinModal(${room.id})`}">${isFull ? '<div class="absolute inset-0 bg-gray-100 bg-opacity-50 rounded-xl"></div>' : ''}<div><div class="flex justify-between items-start mb-2"><h3 class="text-xl font-bold flex items-center">${room.title} ${room.isPrivate ? '<i class="fas fa-lock text-gray-400 text-sm ml-2"></i>' : ''}</h3><span class="bg-blue-100 text-blue-800 text-sm font-medium px-3 py-1 rounded-full">${room.members}/${room.maxMembers}</span></div><div class="mb-4">${statusHtml}</div><div class="flex flex-wrap gap-2 mb-4">${room.tags.map(tag => `<span class="bg-gray-200 text-gray-700 text-xs px-2 py-1 rounded-md">#${tag}</span>`).join('')}</div></div><div class="flex justify-between items-center mt-2">${rulesHtml}<div class="text-right text-blue-600 font-semibold">${isFull ? '' : '참여하기 <i class="fas fa-arrow-right"></i>'}</div></div></div>`;
+                roomListEl.innerHTML += roomCard;
+            });
+        }
+
+        function renderStudyRoom(roomId) {
+            currentRoom = rooms.find(r => r.id === roomId);
+            if (!currentRoom) return;
+            const studyRoomEl = document.getElementById('studyRoom');
+            studyRoomEl.innerHTML = `<div class="flex justify-between items-center mb-4"><h2 class="text-3xl font-bold">${currentRoom.title}</h2><button class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600" onclick="leaveRoom()">나가기</button></div><div class="grid grid-cols-1 lg:grid-cols-3 gap-6"><div class="lg:col-span-2 bg-gray-900 rounded-xl p-4 grid grid-cols-2 gap-4">${Array(currentRoom.members).fill(0).map((_, i) => `<div class="bg-black rounded-lg relative aspect-video overflow-hidden"><img src="${mockScreenImages[i % mockScreenImages.length]}" alt="Shared Screen ${i+1}" class="w-full h-full object-cover"><div class="absolute bottom-2 left-2 bg-black bg-opacity-50 text-white text-sm px-2 py-1 rounded">${i === 0 ? '지은 (나)' : currentRoom.participants[i] || `참가자 ${i + 1}`}</div></div>`).join('')}${Array(currentRoom.maxMembers - currentRoom.members).fill(0).map((_, i) => `<div class="bg-gray-800 border-2 border-dashed border-gray-600 rounded-lg aspect-video flex items-center justify-center"><span class="text-gray-500">빈 자리</span></div>`).join('')}</div><div class="bg-white rounded-xl shadow-sm p-6 flex flex-col space-y-6"><div class="text-center border-b pb-6"><h3 id="timerTitle" class="font-bold text-lg mb-2"></h3><div id="timerDisplay" class="text-6xl font-bold text-blue-600 mb-4"></div><div class="flex justify-center space-x-2"><button id="timerBtn" class="w-24 py-2 rounded-lg" onclick="toggleTimer()"></button><button class="bg-gray-500 text-white w-24 py-2 rounded-lg hover:bg-gray-600" onclick="resetTimer()"><i class="fas fa-redo"></i> 초기화</button></div></div><div class="flex-grow flex flex-col h-64"><h3 class="font-bold text-lg mb-2">채팅</h3><div id="chatBox" class="flex-grow bg-gray-100 rounded-lg p-3 overflow-y-auto mb-2"><div class="text-sm text-gray-500">방에 입장했습니다.</div></div><div class="flex"><input id="chatInput" type="text" class="flex-grow border p-2 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="메시지 입력..."><button class="bg-blue-600 text-white px-4 rounded-r-lg hover:bg-blue-700" onclick="sendChatMessage()">전송</button></div></div></div></div>`;
+            updateTimerUI();
+            showPage('studyRoom');
+        }
+
+        function renderMyPage() {
+            const myPageEl = document.getElementById('myPage');
+            const currentUser = users.find(u => u.name === '지은');
+            const badgesHtml = allBadges.map(badge => {
+                const isAcquired = currentUser.acquiredBadges.includes(badge.id);
+                return `<i class="fas ${badge.icon} ${isAcquired ? badge.color : 'text-gray-300'} fa-2x" title="${badge.name} - ${badge.description}"></i>`;
+            }).join('');
+
+            myPageEl.innerHTML = `<div class="bg-white p-8 rounded-xl shadow-sm"><div class="flex items-center space-x-4 mb-8"><img src="${currentUser.avatar}" alt="User" class="w-24 h-24 rounded-full border-4 border-blue-200"><div><h2 class="text-3xl font-bold">${currentUser.name} 님</h2><p class="text-gray-500">코딩 테스트 준비, 알고리즘 실력 향상</p></div></div><div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-center mb-10"><div class="bg-gray-100 p-6 rounded-lg"><p class="text-gray-500 text-sm">총 공부 시간</p><p class="text-3xl font-bold text-blue-600">${currentUser.totalStudyTime.toFixed(1)} <span class="text-lg font-medium">시간</span></p></div><div class="bg-gray-100 p-6 rounded-lg"><p class="text-gray-500 text-sm">완료한 목표</p><p class="text-3xl font-bold text-green-600">72 <span class="text-lg font-medium">개</span></p></div><div class="bg-gray-100 p-6 rounded-lg"><p class="text-gray-500 text-sm">획득 뱃지</p><p class="text-3xl font-bold">${currentUser.acquiredBadges.length} <span class="text-lg font-medium">개</span></p></div></div><div><h3 class="text-xl font-bold mb-4">나의 뱃지 현황</h3><div class="p-4 bg-gray-50 rounded-lg flex justify-around items-center">${badgesHtml}</div></div><div class="mt-8"><h3 class="text-xl font-bold mb-4">최근 활동 기록</h3><ul class="space-y-3"><li class="bg-white p-4 rounded-lg border flex justify-between items-center"><div><p class="font-semibold">알고리즘 집중 50분방</p><p class="text-sm text-gray-500">목표: 백준 골드 문제 2개 풀이</p></div><span class="text-sm text-gray-400">어제</span></li><li class="bg-white p-4 rounded-lg border flex justify-between items-center"><div><p class="font-semibold">아트 포트폴리오 집중방</p><p class="text-sm text-gray-500">목표: 캐릭터 3컷 완성</p></div><span class="text-sm text-gray-400">3일 전</span></li></ul></div></div>`;
+        }
+        
+        function renderRankingPage() {
+            const rankingPageEl = document.getElementById('rankingPage');
+            const sortedUsers = [...users].sort((a, b) => b.totalStudyTime - a.totalStudyTime);
+            const rankingListHtml = sortedUsers.map((user, index) => {
+                const rank = index + 1;
+                let rankIcon = '';
+                if (rank === 1) rankIcon = '<i class="fas fa-crown text-yellow-400"></i>';
+                else if (rank === 2) rankIcon = '<i class="fas fa-medal text-gray-400"></i>';
+                else if (rank === 3) rankIcon = '<i class="fas fa-medal text-orange-400"></i>';
+                else rankIcon = `<span class="font-bold text-gray-500">${rank}</span>`;
+                return `<div class="flex items-center bg-gray-50 p-4 rounded-lg hover:bg-gray-100 transition cursor-pointer" onclick="showUserProfile('${user.name}')"><div class="w-12 text-center text-xl">${rankIcon}</div><img src="${user.avatar}" alt="${user.name}" class="w-12 h-12 rounded-full mx-4"><p class="flex-grow font-bold text-lg text-gray-800">${user.name}</p><p class="text-blue-600 font-bold text-lg">${user.totalStudyTime.toFixed(1)} 시간</p></div>`;
+            }).join('');
+            rankingPageEl.innerHTML = `<div class="bg-white p-8 rounded-xl shadow-sm"><h2 class="text-3xl font-bold mb-2">🏆 공부 시간 랭킹</h2><p class="text-gray-500 mb-8">꾸준함이 최고의 무기! 다른 분들과 함께 성장해보세요.</p><div class="space-y-3">${rankingListHtml}</div></div>`;
+        }
+        
+        function renderUserProfile(userName) {
+            const profilePageEl = document.getElementById('userProfilePage');
+            const user = users.find(u => u.name === userName);
+            if (!user) return;
+            const badgesHtml = user.acquiredBadges.map(badgeId => {
+                const badge = allBadges.find(b => b.id === badgeId);
+                return `<div class="text-center" title="${badge.name} - ${badge.description}"><i class="fas ${badge.icon} ${badge.color} fa-2x mb-1"></i><p class="text-xs font-medium">${badge.name}</p></div>`;
+            }).join('');
+
+            profilePageEl.innerHTML = `
+                <div class="bg-white p-8 rounded-xl shadow-sm">
+                    <button onclick="showPage(previousPageId)" class="mb-6 text-blue-600 hover:underline"><i class="fas fa-arrow-left mr-2"></i>뒤로 가기</button>
+                    <div class="flex flex-col items-center text-center">
+                        <img src="${user.avatar}" alt="${user.name}" class="w-32 h-32 rounded-full border-4 border-blue-300 mb-4">
+                        <h2 class="text-4xl font-bold">${user.name}</h2>
+                        <p class="text-lg text-gray-500 mt-2">총 공부 시간: <span class="font-bold text-blue-600">${user.totalStudyTime.toFixed(1)}</span> 시간</p>
+                    </div>
+                    <div class="mt-10">
+                        <h3 class="text-xl font-bold mb-4 text-center">획득한 뱃지 (${user.acquiredBadges.length}개)</h3>
+                        <div class="p-6 bg-gray-50 rounded-lg grid grid-cols-3 md:grid-cols-6 gap-4">
+                            ${badgesHtml || '<p class="col-span-full text-center text-gray-500">아직 획득한 뱃지가 없습니다.</p>'}
+                        </div>
+                    </div>
+                </div>`;
+        }
+
+        function renderCreateRoomModal() {
+            const modalEl = document.getElementById('createRoomModal');
+            modalEl.innerHTML = `<div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-md m-4"><h2 class="text-2xl font-bold mb-6">스터디방 만들기</h2><div class="space-y-4"><input id="newRoomTitleInput" type="text" placeholder="방 제목" class="w-full p-3 border rounded-lg"><input id="newRoomTagsInput" type="text" placeholder="태그 (쉼표로 구분. 예: React,알고리즘)" class="w-full p-3 border rounded-lg"><select id="newRoomTypeInput" class="w-full p-3 border rounded-lg"><option value="public">공개방</option><option value="private">비공개방</option></select><input id="newRoomPasswordInput" type="password" placeholder="비밀번호 (비공개방 선택 시)" class="w-full p-3 border rounded-lg hidden"><div><label class="block text-sm font-medium text-gray-700 mb-2">뽀모도로 설정</label><div class="flex space-x-2"><input id="newFocusTimeInput" type="number" value="25" class="w-full p-3 border rounded-lg" title="집중 시간(분)"><input id="newRestTimeInput" type="number" value="5" class="w-full p-3 border rounded-lg" title="휴식 시간(분)"></div></div><div><label class="block text-sm font-medium text-gray-700 mb-2">필수 규칙 설정</label><div class="space-y-3"><div class="flex items-center justify-between bg-gray-100 p-3 rounded-lg"><span class="font-medium"><i class="fas fa-microphone mr-2"></i>마이크 ON</span><label class="switch"><input id="newMicRequired" type="checkbox"><span class="slider"></span></label></div><div class="flex items-center justify-between bg-gray-100 p-3 rounded-lg"><span class="font-medium"><i class="fas fa-video mr-2"></i>캠 ON</span><label class="switch"><input id="newCamRequired" type="checkbox"><span class="slider"></span></label></div><div class="flex items-center justify-between bg-gray-100 p-3 rounded-lg"><span class="font-medium"><i class="fas fa-desktop mr-2"></i>화면 공유</span><label class="switch"><input id="newScreenRequired" type="checkbox"><span class="slider"></span></label></div></div></div></div><div class="mt-8 flex justify-end space-x-3"><button class="bg-gray-200 px-6 py-2 rounded-lg hover:bg-gray-300" onclick="closeCreateRoomModal()">취소</button><button class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700" onclick="createRoom()">생성하기</button></div></div>`;
+            document.getElementById('newRoomTypeInput').addEventListener('change', (e) => {
+                document.getElementById('newRoomPasswordInput').classList.toggle('hidden', e.target.value !== 'private');
+            });
+        }
+
+        function renderJoinRoomModal() {
+            const modalEl = document.getElementById('joinRoomModal');
+            modalEl.innerHTML = `<div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-md m-4 relative"><button onclick="closeJoinModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-2xl leading-none">&times;</button><h2 class="text-2xl font-bold mb-2">스터디방 입장</h2><p id="joinRoomTitle" class="text-gray-600 mb-4"></p><div class="space-y-4 mb-6"><div id="joinRoomParticipants" class="p-4 bg-gray-50 rounded-lg"><h4 class="font-bold text-gray-800 mb-2">현재 참여자</h4><div class="flex flex-wrap gap-2"></div></div><div id="joinRoomTimerStatus" class="p-4 bg-gray-50 rounded-lg"><h4 class="font-bold text-gray-800 mb-2">타이머 상태</h4><p class="text-gray-600"></p></div><div id="joinRoomRules" class="p-4 bg-gray-50 rounded-lg"><h4 class="font-bold text-gray-800 mb-2">입장 규칙</h4><div class="flex items-center space-x-4 text-gray-700"></div></div><div id="passwordSection" class="hidden"><label for="joinPasswordInput" class="block text-sm font-medium text-gray-700 mb-1">비밀번호</label><input id="joinPasswordInput" type="password" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"></div></div><input id="goalInput" type="text" placeholder="오늘의 목표를 입력하세요!" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"><div class="mt-8 flex justify-end"><button class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700" onclick="joinRoom()">입장하기</button></div></div>`;
+        }
+
+        // --- 페이지 네비게이션 ---
+        function showPage(pageId) {
+            const currentPageEl = document.querySelector('.page.active');
+            if (currentPageEl) {
+                previousPageId = currentPageEl.id;
+            }
+            if (pageId === 'lobby') { currentRoom = null; } 
+            else if (pageId === 'rankingPage') { renderRankingPage(); } 
+            else if (pageId === 'myPage') { renderMyPage(); }
+            document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
+            document.getElementById(pageId).classList.add('active');
+            window.scrollTo(0, 0);
+        }
+
+        function showUserProfile(userName) {
+            renderUserProfile(userName);
+            showPage('userProfilePage');
+        }
+        
+        function toggleMobileMenu() { document.getElementById('mobileMenu').classList.toggle('hidden'); }
+
+        // --- 모달 관리 ---
+        function openCreateRoomModal() { document.getElementById('createRoomModal').classList.remove('hidden'); }
+        function closeCreateRoomModal() { document.getElementById('createRoomModal').classList.add('hidden'); }
+        
+        function openJoinModal(roomId) {
+            const room = rooms.find(r => r.id === roomId);
+            if (room) {
+                document.getElementById('joinRoomTitle').textContent = `"${room.title}" 방에 입장합니다.`;
+                const participantsEl = document.getElementById('joinRoomParticipants').querySelector('div');
+                participantsEl.innerHTML = room.participants.map(p => `<span class="bg-gray-200 px-2 py-1 rounded-full text-sm font-medium text-gray-700">${p}</span>`).join('') || `<p class="text-sm text-gray-500">아직 참여자가 없습니다.</p>`;
+                const timerStatusEl = document.getElementById('joinRoomTimerStatus').querySelector('p');
+                if (room.timerState === 'running') {
+                    const minutes = Math.floor(room.timerCurrentTime / 60);
+                    const seconds = room.timerCurrentTime % 60;
+                    timerStatusEl.innerHTML = `<span class="font-bold ${room.isFocusSession ? 'text-red-500' : 'text-green-500'}">${room.isFocusSession ? '집중' : '휴식'} 시간</span> 진행 중 (${minutes}:${String(seconds).padStart(2, '0')} 남음)`;
+                } else { timerStatusEl.textContent = '타이머 대기 중'; }
+                const rulesEl = document.getElementById('joinRoomRules').querySelector('div');
+                rulesEl.innerHTML = `<span class="${room.rules.mic ? 'text-blue-600' : 'text-gray-400'}" title="마이크"><i class="fas fa-microphone fa-lg mr-1"></i> ${room.rules.mic ? '필수' : '선택'}</span><span class="${room.rules.cam ? 'text-blue-600' : 'text-gray-400'}" title="캠"><i class="fas fa-video fa-lg mr-1"></i> ${room.rules.cam ? '필수' : '선택'}</span><span class="${room.rules.screen ? 'text-blue-600' : 'text-gray-400'}" title="화면공유"><i class="fas fa-desktop fa-lg mr-1"></i> ${room.rules.screen ? '필수' : '선택'}</span>`;
+                const passwordSection = document.getElementById('passwordSection');
+                passwordSection.classList.toggle('hidden', !room.isPrivate);
+                document.getElementById('joinRoomModal').dataset.roomId = roomId;
+                document.getElementById('joinRoomModal').classList.remove('hidden');
+            }
+        }
+        function closeJoinModal() { document.getElementById('joinRoomModal').classList.add('hidden'); }
+        
+        // --- 스터디방 로직 ---
+        function createRoom() {
+            const focusTime = parseInt(document.getElementById('newFocusTimeInput').value) || 25;
+            const isPrivate = document.getElementById('newRoomTypeInput').value === 'private';
+            const password = isPrivate ? document.getElementById('newRoomPasswordInput').value : null;
+            if (isPrivate && !password) { alert('비공개방은 비밀번호를 설정해야 합니다.'); return; }
+            const tagInput = document.getElementById('newRoomTagsInput').value;
+            const tags = tagInput.split(',').map(tag => tag.trim()).filter(tag => tag);
+
+            const newRoom = { id: rooms.length + 1, title: document.getElementById('newRoomTitleInput').value || '새로운 스터디방', tags: tags, members: 1, maxMembers: 6, isPrivate, password, focusTime: focusTime, restTime: parseInt(document.getElementById('newRestTimeInput').value) || 5, rules: { mic: document.getElementById('newMicRequired').checked, cam: document.getElementById('newCamRequired').checked, screen: document.getElementById('newScreenRequired').checked, }, participants: ['지은'], scheduledTime: null, timerState: 'stopped', isFocusSession: true, timerCurrentTime: focusTime * 60, };
+            rooms.push(newRoom);
+            closeCreateRoomModal();
+            renderStudyRoom(newRoom.id);
+        }
+
+        function joinRoom() {
+            const goal = document.getElementById('goalInput').value;
+            if (!goal) { alert('오늘의 목표를 입력해주세요!'); return; }
+            const roomId = parseInt(document.getElementById('joinRoomModal').dataset.roomId);
+            const room = rooms.find(r => r.id === roomId);
+            if (room.isPrivate) {
+                const enteredPassword = document.getElementById('joinPasswordInput').value;
+                if (enteredPassword !== room.password) { alert('비밀번호가 일치하지 않습니다.'); return; }
+            }
+            if (room.members < room.maxMembers) {
+                room.members++;
+                room.participants.push('지은(나)');
+                closeJoinModal();
+                renderStudyRoom(roomId);
+            } else { alert('방이 가득 찼습니다.'); closeJoinModal(); }
+        }
+
+        function leaveRoom() { if (currentRoom) { const room = rooms.find(r => r.id === currentRoom.id); if (room) { room.members--; const myIndex = room.participants.indexOf('지은(나)'); if (myIndex > -1) { room.participants.splice(myIndex, 1); } } currentRoom = null; renderRooms(); showPage('lobby'); } }
+        function sendChatMessage() { const chatInput = document.getElementById('chatInput'); const chatBox = document.getElementById('chatBox'); if (chatInput && chatInput.value.trim() !== '') { const msgEl = document.createElement('div'); msgEl.innerHTML = `<span class="font-bold text-blue-700">나:</span> ${chatInput.value}`; msgEl.className = 'text-sm mb-1'; chatBox.appendChild(msgEl); chatInput.value = ''; chatBox.scrollTop = chatBox.scrollHeight; } }
+        function toggleTimer() { if (!currentRoom) return; if (currentRoom.timerState === 'running') { currentRoom.timerState = 'paused'; } else { currentRoom.timerState = 'running'; } updateTimerUI(); }
+        function resetTimer() { if (!currentRoom) return; currentRoom.timerState = 'stopped'; currentRoom.isFocusSession = true; currentRoom.timerCurrentTime = currentRoom.focusTime * 60; updateTimerUI(); }
+        function updateTimerUI() { if (!currentRoom || !document.getElementById('studyRoom').classList.contains('active')) return; const timerTitleEl = document.getElementById('timerTitle'); const timerDisplayEl = document.getElementById('timerDisplay'); const timerBtnEl = document.getElementById('timerBtn'); if (!timerTitleEl || !timerDisplayEl || !timerBtnEl) return; timerTitleEl.textContent = currentRoom.isFocusSession ? '🔥 집중 시간' : '☕️ 휴식 시간'; timerTitleEl.className = `font-bold text-lg mb-2 ${currentRoom.isFocusSession ? 'text-red-500' : 'text-green-500'}`; const minutes = Math.floor(currentRoom.timerCurrentTime / 60); const seconds = currentRoom.timerCurrentTime % 60; timerDisplayEl.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`; if (currentRoom.timerState === 'running') { timerBtnEl.innerHTML = '<i class="fas fa-pause"></i> 일시정지'; timerBtnEl.className = 'w-24 py-2 rounded-lg bg-yellow-500 text-white hover:bg-yellow-600'; } else { timerBtnEl.innerHTML = '<i class="fas fa-play"></i> 시작'; timerBtnEl.className = 'w-24 py-2 rounded-lg bg-green-500 text-white hover:bg-green-600'; } }
+        
+        // 전역 타이머 업데이트 루프
+        setInterval(() => {
+            rooms.forEach(room => {
+                if (room.timerState === 'running') {
+                    if (room.timerCurrentTime > 0) { room.timerCurrentTime--; } 
+                    else {
+                        room.isFocusSession = !room.isFocusSession;
+                        room.timerCurrentTime = (room.isFocusSession ? room.focusTime : room.restTime) * 60;
+                        room.timerState = 'stopped';
+                        if (currentRoom && currentRoom.id === room.id) { alert(room.isFocusSession ? '휴식 끝! 새로운 집중 시간입니다.' : '집중 시간 끝! 휴식 시간입니다.'); }
+                    }
+                }
+            });
+            if (currentRoom) { updateTimerUI(); }
+            if (document.getElementById('lobby').classList.contains('active')) { renderRooms(); }
+        }, 1000);
+        
+        // --- 초기화 ---
+        window.onload = () => {
+            initializeRooms();
+            renderMyPage();
+            renderCreateRoomModal();
+            renderJoinRoomModal();
+            renderRooms();
+            document.getElementById('searchInput').addEventListener('keyup', renderRooms);
+            document.getElementById('micFilter').addEventListener('change', renderRooms);
+            document.getElementById('camFilter').addEventListener('change', renderRooms);
+            document.getElementById('screenFilter').addEventListener('change', renderRooms);
+        };
+    </script>
+</body>
+</html>
