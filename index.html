@@ -81,6 +81,9 @@
             text-decoration: line-through;
             color: #9ca3af;
         }
+        .todo-item.current {
+            background-color: #dbeafe; /* blue-100 */
+        }
         /* 탭 스타일 */
         .tab-btn {
             transition: all 0.3s ease;
@@ -89,6 +92,10 @@
             border-bottom-color: #2563eb;
             color: #2563eb;
             font-weight: 600;
+        }
+        /* 화면 공유 호버 효과 */
+        .participant-screen:hover .report-btn {
+            opacity: 1;
         }
     </style>
 </head>
@@ -138,8 +145,7 @@
                 <section class="text-center bg-white p-8 rounded-xl shadow-sm">
                     <h1 class="text-4xl font-bold mb-4">함께하는 꾸준함, <span class="text-blue-600">성장을 만들다</span></h1>
                     <p class="text-gray-600 max-w-2xl mx-auto mb-8">혼자서는 어려운 목표, 모각코에서 동료들과 함께 이루어보세요. 지금 바로 참여하고 즉시 몰입 환경을 경험할 수 있습니다.</p>
-                    <button class="bg-blue-600 text-white px-8 py-3 rounded-lg font-bold text-lg hover:bg-blue-700 transition transform hover:scale-105" onclick="openCreateRoomModal()">
-                        <i class="fas fa-plus mr-2"></i>즉시 참여 모각코 만들기
+                    <button id="main-action-btn" class="bg-blue-600 text-white px-8 py-3 rounded-lg font-bold text-lg hover:bg-blue-700 transition transform hover:scale-105">
                     </button>
                 </section>
 
@@ -181,64 +187,104 @@
             </div>
 
             <div id="studyRoom" class="page"></div>
-
             <div id="myPage" class="page"></div>
-
             <div id="rankingPage" class="page"></div>
-            
             <div id="userProfilePage" class="page"></div>
-            
             <div id="studyGroupPage" class="page"></div>
-
         </main>
     </div>
 
     <div id="createRoomModal" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center hidden overflow-y-auto py-10"></div>
-    
+    <div id="createGroupModal" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center hidden overflow-y-auto py-10"></div>
     <div id="joinRoomModal" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center hidden"></div>
+    <div id="zoomModal" class="fixed inset-0 bg-black bg-opacity-90 flex justify-center items-center hidden p-0 z-50" onclick="closeZoomModal()">
+        <img id="zoomedImage" src="" alt="Zoomed Screen" class="w-full h-full object-contain">
+        <button class="absolute top-5 right-5 text-white text-4xl">&times;</button>
+    </div>
+    <div id="reportModal" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center hidden z-50">
+        <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-md m-4">
+            <h2 class="text-2xl font-bold mb-2">사용자 신고하기</h2>
+            <p class="text-gray-600 mb-6"><span id="reportUserName" class="font-semibold"></span>님을 신고하는 이유를 선택해주세요.</p>
+            <div class="space-y-2">
+                <label class="block"><input type="radio" name="reportReason" value="inappropriate_content" class="mr-2">부적절한 콘텐츠</label>
+                <label class="block"><input type="radio" name="reportReason" value="spam" class="mr-2">스팸 또는 광고</label>
+                <label class="block"><input type="radio" name="reportReason" value="harassment" class="mr-2">괴롭힘 또는 희롱</label>
+                <label class="block"><input type="radio" name="reportReason" value="etc" class="mr-2">기타</label>
+            </div>
+            <textarea id="reportDetails" class="w-full mt-4 p-2 border rounded-lg" placeholder="상세 내용을 입력해주세요 (선택 사항)"></textarea>
+            <div class="mt-8 flex justify-end space-x-3">
+                <button class="bg-gray-200 px-6 py-2 rounded-lg hover:bg-gray-300" onclick="closeReportModal()">취소</button>
+                <button class="bg-red-600 text-white px-6 py-2 rounded-lg hover:bg-red-700" onclick="submitReport()">신고하기</button>
+            </div>
+        </div>
+    </div>
+    <div id="badgeModal" class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center hidden z-50">
+        <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-2xl m-4">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold">전체 뱃지 목록</h2>
+                <button onclick="closeBadgeModal()" class="text-gray-400 hover:text-gray-600 text-2xl leading-none">&times;</button>
+            </div>
+            <div id="allBadgesContainer" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                <!-- JS로 뱃지 목록이 동적으로 추가됩니다 -->
+            </div>
+        </div>
+    </div>
 
 
     <script>
         // --- 초기 데이터 (서버 대신 사용) ---
         const mockScreenImages = [
-            'https://placehold.co/400x225/2d3748/e2e8f0?text=VS+Code',
-            'https://placehold.co/400x225/1a202c/90cdf4?text=Illustrator',
-            'https://placehold.co/400x225/4a5568/f7fafc?text=Browser',
-            'https://placehold.co/400x225/38a169/f0fff4?text=Algorithm+Site'
+            'https://placehold.co/600x338/2d3748/e2e8f0?text=VS+Code+Editor',
+            'https://placehold.co/600x338/1a202c/90cdf4?text=Adobe+Illustrator',
+            'https://placehold.co/600x338/2c5282/ffffff?text=React+Docs',
+            'https://placehold.co/600x338/276749/ffffff?text=LeetCode+Problem',
+            'https://placehold.co/600x338/702459/ffffff?text=Figma+Design',
+            'https://placehold.co/600x338/975a16/ffffff?text=Notion+Page'
         ];
 
         const allBadges = [
-            { id: 'b01', name: '꾸준함의 증표', icon: 'fa-medal', color: 'text-yellow-500', description: '7일 연속으로 스터디에 참여하세요.' },
+            { id: 'b01', name: '꾸준함의 증표', icon: 'fa-medal', color: 'text-yellow-500', description: '7일 연속으로 참여하세요.' },
             { id: 'b02', name: '집중의 달인', icon: 'fa-star', color: 'text-indigo-500', description: '누적 50시간 이상 공부하세요.' },
-            { id: 'b03', name: '최고의 동료', icon: 'fa-users', color: 'text-teal-500', description: '5개 이상의 스터디에 참여하세요.' },
-            { id: 'b04', name: '얼리버드', icon: 'fa-sun', color: 'text-orange-400', description: '오전 6시 ~ 9시 사이에 5회 이상 참여하세요.' },
+            { id: 'b03', name: '최고의 동료', icon: 'fa-users', color: 'text-teal-500', description: '5개 이상의 스터디 그룹에 참여하세요.' },
+            { id: 'b04', name: '얼리버드', icon: 'fa-sun', color: 'text-orange-400', description: '오전 6시-9시 사이에 5회 이상 참여하세요.' },
             { id: 'b05', name: '나이트 아울', icon: 'fa-moon', color: 'text-purple-500', description: '오후 11시 이후에 5회 이상 참여하세요.' },
-            { id: 'b06', name: '방장', icon: 'fa-flag', color: 'text-red-500', description: '스터디방을 3회 이상 개설하세요.' },
+            { id: 'b06', name: '방장', icon: 'fa-flag', color: 'text-red-500', description: '모각코를 3회 이상 개설하세요.' },
+            { id: 'b07', name: '탐험가', icon: 'fa-compass', color: 'text-cyan-500', description: '10개 이상의 다양한 모각코에 참여하세요.' },
+            { id: 'b08', name: '마라토너', icon: 'fa-person-running', color: 'text-lime-500', description: '한 번에 3시간 이상 집중하세요.' },
+            { id: 'b09', name: '소통의 달인', icon: 'fa-comments', color: 'text-pink-500', description: '채팅을 100회 이상 입력하세요.' },
+            { id: 'b10', name: '리더', icon: 'fa-user-tie', color: 'text-slate-600', description: '스터디 그룹 리더를 3회 이상 맡으세요.' },
+            { id: 'b11', name: '프로 질문러', icon: 'fa-circle-question', color: 'text-sky-500', description: '채팅으로 질문을 50회 이상 하세요.' },
+            { id: 'b12', name: '알고리즘 전문가', icon: 'fa-brain', color: 'text-amber-600', description: '알고리즘 태그 모각코에 50시간 이상 참여하세요.' },
         ];
 
         let rooms = [];
         let users = [
-            { name: '동욱', totalStudyTime: 250.5, avatar: 'https://placehold.co/40x40/FFC107/FFFFFF?text=D', acquiredBadges: ['b01', 'b02', 'b03', 'b05', 'b06'], studyHistory: [{roomName: 'FE 포트폴리오 스터디 (고정)', completedTodos: ['로그인 API 구현', '회원가입 페이지 UI']}], joinedGroups: [1, 3] },
-            { name: '지은', totalStudyTime: 128.2, avatar: 'https://placehold.co/40x40/A3BFFA/FFFFFF?text=P', acquiredBadges: ['b01', 'b02'], studyHistory: [{roomName: '알고리즘 집중 50분방', completedTodos: ['백준 골드 문제 2개 풀이']}], joinedGroups: [1] },
-            { name: '유림', totalStudyTime: 195.8, avatar: 'https://placehold.co/40x40/4CAF50/FFFFFF?text=Y', acquiredBadges: ['b02', 'b03', 'b04'], studyHistory: [{roomName: '아트 포트폴리오 작업방', completedTodos: ['캐릭터 3컷 완성', '배경 스케치']}], joinedGroups: [2] },
-            { name: '수연', totalStudyTime: 310.1, avatar: 'https://placehold.co/40x40/F44336/FFFFFF?text=S', acquiredBadges: ['b01', 'b02', 'b03', 'b04', 'b05', 'b06'], studyHistory: [], joinedGroups: [1, 2, 3] },
-            { name: '민준', totalStudyTime: 95.3, avatar: 'https://placehold.co/40x40/9C27B0/FFFFFF?text=M', acquiredBadges: ['b02', 'b04'], studyHistory: [], joinedGroups: [] },
-            { name: '선아', totalStudyTime: 88.0, avatar: 'https://placehold.co/40x40/00BCD4/FFFFFF?text=S', acquiredBadges: ['b01'], studyHistory: [], joinedGroups: [3] },
-            { name: '재성', totalStudyTime: 154.7, avatar: 'https://placehold.co/40x40/8BC34A/FFFFFF?text=J', acquiredBadges: ['b02', 'b06'], studyHistory: [], joinedGroups: [] },
+            { name: '동욱', totalStudyTime: 250.5, avatar: 'https://placehold.co/40x40/FFC107/FFFFFF?text=D', acquiredBadges: ['b01', 'b02', 'b03', 'b05', 'b06', 'b09', 'b12'], studyHistory: [{roomName: 'FE 포트폴리오 스터디 (고정)', completedTodos: ['로그인 API 구현', '회원가입 페이지 UI']}], joinedGroups: [1, 3], currentTask: 'API 문서 작성' },
+            { name: '지은', totalStudyTime: 128.2, avatar: 'https://placehold.co/40x40/A3BFFA/FFFFFF?text=P', acquiredBadges: ['b01', 'b02', 'b07'], studyHistory: [{roomName: '알고리즘 집중 50분방', completedTodos: ['백준 골드 문제 2개 풀이']}], joinedGroups: [1], currentTask: null },
+            { name: '유림', totalStudyTime: 195.8, avatar: 'https://placehold.co/40x40/4CAF50/FFFFFF?text=Y', acquiredBadges: ['b02', 'b03', 'b04', 'b08'], studyHistory: [{roomName: '아트 포트폴리오 작업방', completedTodos: ['캐릭터 3컷 완성', '배경 스케치']}], joinedGroups: [2], currentTask: '캐릭터 시트 마무리' },
+            { name: '수연', totalStudyTime: 310.1, avatar: 'https://placehold.co/40x40/F44336/FFFFFF?text=S', acquiredBadges: ['b01', 'b02', 'b03', 'b04', 'b05', 'b06', 'b07', 'b08', 'b09', 'b10', 'b11', 'b12'], studyHistory: [], joinedGroups: [1, 2, 3], currentTask: 'DB 스키마 설계' },
+            { name: '민준', totalStudyTime: 95.3, avatar: 'https://placehold.co/40x40/9C27B0/FFFFFF?text=M', acquiredBadges: ['b02', 'b04'], studyHistory: [], joinedGroups: [], currentTask: '알고리즘 문제 풀이' },
+            { name: '선아', totalStudyTime: 88.0, avatar: 'https://placehold.co/40x40/00BCD4/FFFFFF?text=S', acquiredBadges: ['b01', 'b07'], studyHistory: [], joinedGroups: [3], currentTask: '사이드 프로젝트 기획' },
+            { name: '재성', totalStudyTime: 154.7, avatar: 'https://placehold.co/40x40/8BC34A/FFFFFF?text=J', acquiredBadges: ['b02', 'b06'], studyHistory: [], joinedGroups: [], currentTask: 'CS 개념 정리' },
+            { name: '하윤', totalStudyTime: 215.2, avatar: 'https://placehold.co/40x40/E91E63/FFFFFF?text=H', acquiredBadges: ['b01', 'b02', 'b04', 'b08'], studyHistory: [], joinedGroups: [4], currentTask: 'UX 리서치 분석' },
+            { name: '서준', totalStudyTime: 178.9, avatar: 'https://placehold.co/40x40/3F51B5/FFFFFF?text=S', acquiredBadges: ['b02', 'b05', 'b07'], studyHistory: [], joinedGroups: [2, 4], currentTask: 'UI 디자인 시스템 구축' },
         ];
         
         let studyGroups = [
-            { id: 1, name: '매일 아침 9시 알고리즘 스터디', description: '백준, 프로그래머스 문제를 매일 아침 1시간씩 함께 풀고 코드 리뷰를 진행합니다.', schedule: '매일 09:00 - 10:00', members: ['동욱', '수연', '지은', '민준'], maxMembers: 6, tags: ['알고리즘', '코딩테스트', '꾸준함'], history: [{ date: '2025년 6월 30일', startTime: '09:00', endTime: '10:00', title: 'DP 기본 문제 풀이', participants: ['동욱', '수연', '지은', '민준'] }, { date: '2025년 6월 29일', startTime: '09:00', endTime: '10:00', title: '그래프 탐색(BFS/DFS) 복습', participants: ['동욱', '수연', '민준'] }] },
-            { id: 2, name: '주말 사이드 프로젝트 그룹', description: '주말을 이용해 React와 Node.js 기반의 사이드 프로젝트를 진행합니다. 기획부터 배포까지 함께해요!', schedule: '매주 토,일 14:00 - 18:00', members: ['유림', '현우', '다은', '서준', '선아'], maxMembers: 5, tags: ['React', 'Node.js', '사이드프로젝트'], history: [{ date: '2025년 6월 28일', startTime: '14:00', endTime: '18:00', title: '메인 페이지 UI 컴포넌트 개발', participants: ['유림', '현우', '다은', '서준', '선아'] }, { date: '2025년 6월 27일', startTime: '14:00', endTime: '17:30', title: '프로젝트 초기 세팅 및 기획 리뷰', participants: ['유림', '현우', '다은', '서준'] }] },
-            { id: 3, name: 'CS 면접 스터디', description: '주요 CS 과목(네트워크, OS, 자료구조)에 대한 개념을 정리하고, 예상 질문에 대한 모의 면접을 진행합니다.', schedule: '매주 화,목 20:00 - 22:00', members: ['동욱', '수연', '재성'], maxMembers: 5, tags: ['CS', '면접', '취업준비'], history: [{ date: '2025년 6월 26일', startTime: '20:00', endTime: '21:30', title: '네트워크 7계층 모의 면접', participants: ['동욱', '수연', '재성'] }] },
+            { id: 1, name: '매일 아침 9시 알고리즘 스터디', description: '백준, 프로그래머스 문제를 매일 아침 1시간씩 함께 풀고 코드 리뷰를 진행합니다.', schedule: '매일 09:00 - 10:00', members: ['동욱', '수연', '지은', '민준'], maxMembers: 6, tags: ['알고리즘', '코딩테스트', '꾸준함'], recruitmentDeadline: '2025-07-10', history: [{ date: '2025년 6월 30일', startTime: '09:00', endTime: '10:00', title: 'DP 기본 문제 풀이', participants: ['동욱', '수연', '지은', '민준'] }, { date: '2025년 6월 29일', startTime: '09:00', endTime: '10:00', title: '그래프 탐색(BFS/DFS) 복습', participants: ['동욱', '수연', '민준'] }] },
+            { id: 2, name: '주말 사이드 프로젝트 그룹', description: '주말을 이용해 React와 Node.js 기반의 사이드 프로젝트를 진행합니다. 기획부터 배포까지 함께해요!', schedule: '매주 토,일 14:00 - 18:00', members: ['유림', '현우', '다은', '서준', '선아'], maxMembers: 5, tags: ['React', 'Node.js', '사이드프로젝트'], recruitmentDeadline: '2025-07-15', history: [{ date: '2025년 6월 28일', startTime: '14:00', endTime: '18:00', title: '메인 페이지 UI 컴포넌트 개발', participants: ['유림', '현우', '다은', '서준', '선아'] }, { date: '2025년 6월 27일', startTime: '14:00', endTime: '17:30', title: '프로젝트 초기 세팅 및 기획 리뷰', participants: ['유림', '현우', '다은', '서준'] }] },
+            { id: 3, name: 'CS 면접 스터디', description: '주요 CS 과목(네트워크, OS, 자료구조)에 대한 개념을 정리하고, 예상 질문에 대한 모의 면접을 진행합니다.', schedule: '매주 화,목 20:00 - 22:00', members: ['동욱', '수연', '재성'], maxMembers: 5, tags: ['CS', '면접', '취업준비'], recruitmentDeadline: '상시모집', history: [{ date: '2025년 6월 26일', startTime: '20:00', endTime: '21:30', title: '네트워크 7계층 모의 면접', participants: ['동욱', '수연', '재성'] }] },
+            { id: 4, name: 'UX/UI 디자인 포트폴리오 그룹', description: '매주 하나의 주제를 정해 UI를 디자인하고 서로 피드백을 공유하며 포트폴리오를 완성합니다.', schedule: '매주 수 19:00 - 21:00', members: ['하윤', '서준'], maxMembers: 5, tags: ['UX/UI', '디자인', '피그마'], recruitmentDeadline: '2025-07-20', history: [{ date: '2025년 6월 25일', startTime: '19:00', endTime: '21:00', title: '음악 앱 UI 디자인 및 피드백', participants: ['하윤', '서준'] }] },
         ];
 
         function initializeRooms() {
             rooms = [
-                { id: 1, title: '알고리즘 집중 50분방', tags: ['코딩테스트', '알고리즘'], members: 3, maxMembers: 6, isPrivate: false, password: null, usePomodoro: true, focusTime: 50, restTime: 10, rules: { mic: true, cam: false, screen: true }, participants: ['동욱', '수연', '민준'], scheduledTime: null, timerState: 'running', isFocusSession: true, timerCurrentTime: 35 * 60 + 10 },
-                { id: 2, title: '아트 포트폴리오 작업방', tags: ['일러스트', '포트폴리오'], members: 4, maxMembers: 8, isPrivate: false, password: null, usePomodoro: false, focusTime: 90, restTime: 15, rules: { mic: false, cam: false, screen: true }, participants: ['유림', '현우', '다은', '서준'], scheduledTime: null, timerState: 'stopped', isFocusSession: true, timerCurrentTime: 90 * 60 },
-                { id: 3, title: 'FE 포트폴리오 스터디 (고정)', tags: ['프론트엔드', 'React'], members: 2, maxMembers: 4, isPrivate: true, password: '1234', usePomodoro: true, focusTime: 25, restTime: 5, rules: { mic: true, cam: true, screen: true }, participants: ['지훈', '예진'], scheduledTime: null, timerState: 'stopped', isFocusSession: true, timerCurrentTime: 25 * 60 },
-                { id: 4, title: '저녁 코딩 챌린지', tags: ['코딩', '챌린지'], members: 1, maxMembers: 10, isPrivate: false, password: null, usePomodoro: true, focusTime: 60, restTime: 10, rules: { mic: false, cam: false, screen: true }, participants: ['선아'], scheduledTime: '18:00', timerState: 'stopped', isFocusSession: true, timerCurrentTime: 60 * 60 },
+                { id: 1, title: '알고리즘 집중 50분방', hostName: '동욱', tags: ['코딩테스트', '알고리즘'], members: 3, maxMembers: 6, isPrivate: false, password: null, usePomodoro: true, focusTime: 50, restTime: 10, rules: { mic: true, cam: false, screen: true }, participants: [{name: '동욱', sessionTime: 1234}, {name: '수연', sessionTime: 890}, {name: '민준', sessionTime: 540}], scheduledTime: null, timerState: 'running', isFocusSession: true, timerCurrentTime: 35 * 60 + 10, requiresApproval: true, pendingMembers: ['재성'] },
+                { id: 2, title: '아트 포트폴리오 작업방', hostName: '유림', tags: ['일러스트', '포트폴리오'], members: 4, maxMembers: 8, isPrivate: false, password: null, usePomodoro: false, focusTime: 90, restTime: 15, rules: { mic: false, cam: false, screen: true }, participants: [{name: '유림', sessionTime: 3210}, {name: '현우', sessionTime: 2800}, {name: '다은', sessionTime: 1500}, {name: '서준', sessionTime: 4500}], scheduledTime: null, timerState: 'stopped', isFocusSession: true, timerCurrentTime: 90 * 60, requiresApproval: false, pendingMembers: [] },
+                { id: 3, title: 'FE 포트폴리오 스터디 (고정)', hostName: '지훈', tags: ['프론트엔드', 'React'], members: 2, maxMembers: 4, isPrivate: true, password: '1234', usePomodoro: true, focusTime: 25, restTime: 5, rules: { mic: true, cam: true, screen: true }, participants: [{name: '지훈', sessionTime: 1300}, {name: '예진', sessionTime: 1450}], scheduledTime: null, timerState: 'stopped', isFocusSession: true, timerCurrentTime: 25 * 60, requiresApproval: false, pendingMembers: [] },
+                { id: 4, title: '저녁 코딩 챌린지', hostName: '선아', tags: ['코딩', '챌린지'], members: 1, maxMembers: 10, isPrivate: false, password: null, usePomodoro: true, focusTime: 60, restTime: 10, rules: { mic: false, cam: false, screen: true }, participants: [{name: '선아', sessionTime: 0}], scheduledTime: '18:00', timerState: 'stopped', isFocusSession: true, timerCurrentTime: 60 * 60, requiresApproval: false, pendingMembers: [] },
+                { id: 5, title: 'TypeScript 스터디', hostName: '재성', tags: ['TypeScript', '프론트엔드'], members: 2, maxMembers: 5, isPrivate: false, password: null, usePomodoro: true, focusTime: 45, restTime: 10, rules: { mic: true, cam: false, screen: true }, participants: [{name: '재성', sessionTime: 1800}, {name: '하윤', sessionTime: 1800}], scheduledTime: null, timerState: 'running', isFocusSession: true, timerCurrentTime: 20 * 60 + 5, requiresApproval: false, pendingMembers: [] },
+                { id: 6, title: '코테 1일 1문제', hostName: '수연', tags: ['알고리즘', '꾸준함'], members: 5, maxMembers: 5, isPrivate: false, password: null, usePomodoro: true, focusTime: 25, restTime: 5, rules: { mic: false, cam: false, screen: false }, participants: [{name: '선아', sessionTime: 120}, {name: '민준', sessionTime: 300}, {name: '지은', sessionTime: 450}, {name: '동욱', sessionTime: 600}, {name: '수연', sessionTime: 750}], scheduledTime: null, timerState: 'stopped', isFocusSession: true, timerCurrentTime: 25 * 60, requiresApproval: false, pendingMembers: [] },
             ];
         }
 
@@ -283,9 +329,73 @@
         function renderStudyRoom(roomId) {
             currentRoom = rooms.find(r => r.id === roomId);
             if (!currentRoom) return;
+            const isHost = currentRoom.hostName === '지은';
+
             const pomodoroHtml = currentRoom.usePomodoro ? `<div class="text-center border-b pb-6"><h3 id="timerTitle" class="font-bold text-lg mb-2"></h3><div id="timerDisplay" class="text-6xl font-bold text-blue-600 mb-4"></div><div class="flex justify-center space-x-2"><button id="timerBtn" class="w-24 py-2 rounded-lg" onclick="toggleTimer()"></button><button class="bg-gray-500 text-white w-24 py-2 rounded-lg hover:bg-gray-600" onclick="resetTimer()"><i class="fas fa-redo"></i> 초기화</button></div></div>` : '';
+            
+            let hostToolsHtml = '';
+            if (isHost) {
+                const pendingRequestsHtml = currentRoom.pendingMembers && currentRoom.pendingMembers.length > 0 ?
+                    currentRoom.pendingMembers.map(name => `
+                        <div class="flex items-center justify-between text-sm">
+                            <span>${name}</span>
+                            <div>
+                                <button class="text-green-500 hover:text-green-700 font-bold" onclick="approveJoin('${name}')">수락</button>
+                                <button class="text-red-500 hover:text-red-700 font-bold ml-2" onclick="rejectJoin('${name}')">거절</button>
+                            </div>
+                        </div>`).join('') : '<p class="text-xs text-gray-500 text-center">참여 신청이 없습니다.</p>';
+
+                hostToolsHtml = `
+                    <div class="border-t pt-6">
+                        <h3 class="font-bold text-lg mb-2">👑 방장 도구</h3>
+                        <div class="p-3 bg-gray-50 rounded-lg space-y-2">
+                            <h4 class="font-semibold text-sm">참여 신청</h4>
+                            ${pendingRequestsHtml}
+                        </div>
+                    </div>`;
+            }
+
             const studyRoomEl = document.getElementById('studyRoom');
-            studyRoomEl.innerHTML = `<div class="flex justify-between items-center mb-4"><h2 class="text-3xl font-bold">${currentRoom.title}</h2><button class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600" onclick="leaveRoom()">나가기</button></div><div class="grid grid-cols-1 lg:grid-cols-3 gap-6"><div class="lg:col-span-2 bg-gray-900 rounded-xl p-4 grid grid-cols-2 gap-4">${Array(currentRoom.members).fill(0).map((_, i) => `<div class="bg-black rounded-lg relative aspect-video overflow-hidden"><img src="${mockScreenImages[i % mockScreenImages.length]}" alt="Shared Screen ${i+1}" class="w-full h-full object-cover"><div class="absolute bottom-2 left-2 bg-black bg-opacity-50 text-white text-sm px-2 py-1 rounded">${i === 0 ? '지은 (나)' : currentRoom.participants[i] || `참가자 ${i + 1}`}</div></div>`).join('')}${Array(currentRoom.maxMembers - currentRoom.members).fill(0).map((_, i) => `<div class="bg-gray-800 border-2 border-dashed border-gray-600 rounded-lg aspect-video flex items-center justify-center"><span class="text-gray-500">빈 자리</span></div>`).join('')}</div><div class="bg-white rounded-xl shadow-sm p-6 flex flex-col space-y-6">${pomodoroHtml}<div class="flex-grow flex flex-col h-64"><h3 class="font-bold text-lg mb-2">🎯 나의 목표 리스트</h3><div id="todoListContainer" class="flex-grow bg-gray-50 rounded-lg p-3 overflow-y-auto mb-2 space-y-2"></div><div class="flex"><input id="todoInput" type="text" class="flex-grow border p-2 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="할 일 추가..."><button class="bg-blue-600 text-white px-4 rounded-r-lg hover:bg-blue-700" onclick="addTodo()">추가</button></div></div><div class="flex-grow flex flex-col h-64"><h3 class="font-bold text-lg mb-2">💬 채팅</h3><div id="chatBox" class="flex-grow bg-gray-100 rounded-lg p-3 overflow-y-auto mb-2"><div class="text-sm text-gray-500">방에 입장했습니다.</div></div><div class="flex"><input id="chatInput" type="text" class="flex-grow border p-2 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="메시지 입력..."><button class="bg-blue-600 text-white px-4 rounded-r-lg hover:bg-blue-700" onclick="sendChatMessage()">전송</button></div></div></div></div>`;
+            
+            const participantScreensHtml = Array(currentRoom.maxMembers).fill(0).map((_, i) => {
+                if (i < currentRoom.members) {
+                    const isMe = i === 0;
+                    const participant = isMe ? { name: '지은', sessionTime: 0 } : (currentRoom.participants[i-1] || { name: `참가자 ${i + 1}`, sessionTime: 0 });
+                    const user = users.find(u => u.name === participant.name);
+                    
+                    let currentTaskText = '';
+                    if (isMe) {
+                        const currentTodo = currentSessionTodos.find(t => t.isCurrent);
+                        if (currentTodo) currentTaskText = currentTodo.text;
+                    } else if (user && user.currentTask) {
+                        currentTaskText = user.currentTask;
+                    }
+
+                    const sessionMinutes = Math.floor(participant.sessionTime / 60);
+                    const sessionSeconds = participant.sessionTime % 60;
+                    const sessionTimeText = `${String(sessionMinutes).padStart(2, '0')}:${String(sessionSeconds).padStart(2, '0')}`;
+                    const timeStyle = getStudyTimeStyle(participant.sessionTime);
+                    
+                    const statusHtml = `<div class="absolute bottom-2 left-1/2 -translate-x-1/2 w-11/12 flex items-center justify-between bg-black bg-opacity-60 text-white text-xs px-3 py-1 rounded-full">
+                        ${currentTaskText ? `<span class="truncate max-w-[60%]">🎯 ${currentTaskText}</span>` : '<span></span>'}
+                        <span class="flex-shrink-0 font-mono px-2 py-0.5 rounded ${timeStyle}"><i class="fas fa-stopwatch mr-1"></i>${sessionTimeText}</span>
+                    </div>`;
+                    
+                    const delegateButtonHtml = isHost && !isMe ? `<button class="absolute top-10 right-2 bg-blue-500 text-white w-6 h-6 rounded-full text-xs opacity-0 group-hover:opacity-100 transition-opacity" title="방장 위임" onclick="delegateHost('${participant.name}')"><i class="fas fa-crown"></i></button>` : '';
+
+                    return `<div class="participant-screen bg-black rounded-lg relative aspect-video overflow-hidden group">
+                                <img src="${mockScreenImages[i % mockScreenImages.length]}" alt="Shared Screen ${i+1}" class="w-full h-full object-cover cursor-pointer" onclick="zoomInScreen(this.src)">
+                                <div class="absolute top-2 left-2 bg-black bg-opacity-50 text-white text-sm px-2 py-1 rounded flex items-center gap-x-1.5">${participant.name === '지은' ? '지은 (나)' : participant.name} ${currentRoom.hostName === participant.name ? '👑' : ''} ${user ? getUserLevel(user.totalStudyTime) : ''}</div>
+                                ${statusHtml}
+                                ${!isMe ? `<button class="report-btn absolute top-2 right-2 bg-red-500 text-white w-6 h-6 rounded-full text-xs opacity-0 group-hover:opacity-100 transition-opacity" title="신고하기" onclick="openReportModal('${participant.name}')"><i class="fas fa-bell"></i></button>` : ''}
+                                ${delegateButtonHtml}
+                            </div>`;
+                } else {
+                    return `<div class="bg-gray-800 border-2 border-dashed border-gray-600 rounded-lg aspect-video flex items-center justify-center"><span class="text-gray-500">빈 자리</span></div>`;
+                }
+            }).join('');
+
+            studyRoomEl.innerHTML = `<div class="flex justify-between items-center mb-4"><h2 class="text-3xl font-bold">${currentRoom.title}</h2><div class="flex items-center gap-x-2"><button class="bg-gray-200 text-gray-700 px-3 py-2 rounded-lg hover:bg-gray-300" onclick="copyLinkToClipboard()"><i class="fas fa-link mr-2"></i>링크 복사</button><button class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600" onclick="leaveRoom()">나가기</button></div></div><div class="grid grid-cols-1 lg:grid-cols-3 gap-6"><div class="lg:col-span-2 bg-gray-900 rounded-xl p-4 grid grid-cols-2 gap-4">${participantScreensHtml}</div><div class="bg-white rounded-xl shadow-sm p-6 flex flex-col space-y-6">${pomodoroHtml}<div class="flex-grow flex flex-col h-64"><h3 class="font-bold text-lg mb-2">🎯 나의 목표 리스트</h3><div id="todoListContainer" class="flex-grow bg-gray-50 rounded-lg p-3 overflow-y-auto mb-2 space-y-2"></div><div class="flex"><input id="todoInput" type="text" class="flex-grow border p-2 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="할 일 추가..."><button class="bg-blue-600 text-white px-4 rounded-r-lg hover:bg-blue-700" onclick="addTodo()">추가</button></div></div><div class="flex-grow flex flex-col h-64"><h3 class="font-bold text-lg mb-2">💬 채팅</h3><div id="chatBox" class="flex-grow bg-gray-100 rounded-lg p-3 overflow-y-auto mb-2"><div class="text-sm text-gray-500">방에 입장했습니다.</div></div><div class="flex"><input id="chatInput" type="text" class="flex-grow border p-2 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="메시지 입력..."><button class="bg-blue-600 text-white px-4 rounded-r-lg hover:bg-blue-700" onclick="sendChatMessage()">전송</button></div></div>${hostToolsHtml}</div></div>`;
             if(currentRoom.usePomodoro) updateTimerUI();
             renderTodoList();
             document.getElementById('todoInput').addEventListener('keypress', (e) => { if (e.key === 'Enter') addTodo(); });
@@ -295,13 +405,9 @@
         function renderMyPage() {
             const myPageEl = document.getElementById('myPage');
             const currentUser = users.find(u => u.name === '지은');
-            const badgesHtml = allBadges.map(badge => {
-                const isAcquired = currentUser.acquiredBadges.includes(badge.id);
-                return `<i class="fas ${badge.icon} ${isAcquired ? badge.color : 'text-gray-300'} fa-2x" title="${badge.name} - ${badge.description}"></i>`;
-            }).join('');
             const historyHtml = currentUser.studyHistory.map(history => `<li class="bg-white p-4 rounded-lg border"><div class="flex justify-between items-center"><p class="font-semibold">${history.roomName}</p><span class="text-sm text-gray-400">최근</span></div><ul class="mt-2 pl-5 list-disc text-sm text-gray-600">${history.completedTodos.map(todo => `<li>${todo}</li>`).join('')}</ul></li>`).join('');
             const joinedGroupsHtml = studyGroups.filter(g => currentUser.joinedGroups.includes(g.id)).map(group => `<div class="bg-white p-4 rounded-lg border flex justify-between items-center cursor-pointer hover:bg-gray-50" onclick="showStudyGroupPage(${group.id})"><div><p class="font-semibold">${group.name}</p><p class="text-sm text-gray-500">${group.schedule}</p></div><i class="fas fa-chevron-right text-gray-400"></i></div>`).join('');
-            myPageEl.innerHTML = `<div class="bg-white p-8 rounded-xl shadow-sm"><div class="flex items-center space-x-4 mb-8"><img src="${currentUser.avatar}" alt="User" class="w-24 h-24 rounded-full border-4 border-blue-200"><div><h2 class="text-3xl font-bold">${currentUser.name} 님</h2><p class="text-gray-500">코딩 테스트 준비, 알고리즘 실력 향상</p></div></div><div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-center mb-10"><div class="bg-gray-100 p-6 rounded-lg"><p class="text-gray-500 text-sm">총 공부 시간</p><p class="text-3xl font-bold text-blue-600">${currentUser.totalStudyTime.toFixed(1)} <span class="text-lg font-medium">시간</span></p></div><div class="bg-gray-100 p-6 rounded-lg"><p class="text-gray-500 text-sm">완료한 목표</p><p class="text-3xl font-bold text-green-600">${currentUser.studyHistory.reduce((acc, h) => acc + h.completedTodos.length, 0)} <span class="text-lg font-medium">개</span></p></div><div class="bg-gray-100 p-6 rounded-lg"><p class="text-gray-500 text-sm">획득 뱃지</p><p class="text-3xl font-bold">${currentUser.acquiredBadges.length} <span class="text-lg font-medium">개</span></p></div></div><div class="grid grid-cols-1 lg:grid-cols-2 gap-8"><div class="lg:col-span-1"><h3 class="text-xl font-bold mb-4">나의 스터디 그룹</h3><div class="space-y-3">${joinedGroupsHtml || '<p class="text-center text-gray-500">가입한 그룹이 없습니다.</p>'}</div></div><div><h3 class="text-xl font-bold mb-4">나의 뱃지 현황</h3><div class="p-4 bg-gray-50 rounded-lg flex justify-around items-center">${badgesHtml}</div></div></div><div class="mt-8"><h3 class="text-xl font-bold mb-4">최근 활동 기록</h3><ul class="space-y-3">${historyHtml || '<p class="text-center text-gray-500">아직 활동 기록이 없습니다.</p>'}</ul></div></div>`;
+            myPageEl.innerHTML = `<div class="bg-white p-8 rounded-xl shadow-sm"><div class="flex items-center space-x-4 mb-8"><img src="${currentUser.avatar}" alt="User" class="w-24 h-24 rounded-full border-4 border-blue-200"><div><div class="flex items-center gap-x-3"><h2 class="text-3xl font-bold">${currentUser.name} 님</h2><span class="text-sm font-semibold px-3 py-1 rounded-full ${getUserLevel(currentUser.totalStudyTime, true).color} text-white">${getUserLevel(currentUser.totalStudyTime, true).name}</span></div><p class="text-gray-500">코딩 테스트 준비, 알고리즘 실력 향상</p></div></div><div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-center mb-10"><div class="bg-gray-100 p-6 rounded-lg"><p class="text-gray-500 text-sm">총 공부 시간</p><p class="text-3xl font-bold text-blue-600">${currentUser.totalStudyTime.toFixed(1)} <span class="text-lg font-medium">시간</span></p></div><div class="bg-gray-100 p-6 rounded-lg"><p class="text-gray-500 text-sm">완료한 목표</p><p class="text-3xl font-bold text-green-600">${currentUser.studyHistory.reduce((acc, h) => acc + h.completedTodos.length, 0)} <span class="text-lg font-medium">개</span></p></div><div class="bg-gray-100 p-6 rounded-lg"><p class="text-gray-500 text-sm">획득 뱃지</p><p class="text-3xl font-bold">${currentUser.acquiredBadges.length} <span class="text-lg font-medium">개</span></p></div></div><div class="grid grid-cols-1 lg:grid-cols-2 gap-8"><div class="lg:col-span-1"><h3 class="text-xl font-bold mb-4">나의 스터디 그룹</h3><div class="space-y-3">${joinedGroupsHtml || '<p class="text-center text-gray-500">가입한 그룹이 없습니다.</p>'}</div></div><div><div class="flex justify-between items-center mb-4"><h3 class="text-xl font-bold">나의 뱃지 현황</h3><button class="text-sm text-blue-600 font-semibold hover:underline" onclick="openBadgeModal()">전체 보기</button></div><div class="p-4 bg-gray-50 rounded-lg flex justify-around items-center">${currentUser.acquiredBadges.map(bId => { const b = allBadges.find(badge=>badge.id === bId); return `<i class="fas ${b.icon} ${b.color} fa-2x" title="${b.name} - ${b.description}"></i>`}).join('')}</div></div></div><div class="mt-8"><h3 class="text-xl font-bold mb-4">최근 활동 기록</h3><ul class="space-y-3">${historyHtml || '<p class="text-center text-gray-500">아직 활동 기록이 없습니다.</p>'}</ul></div></div>`;
         }
         
         function renderRankingPage() {
@@ -314,7 +420,8 @@
                 else if (rank === 2) rankIcon = '<i class="fas fa-medal text-gray-400"></i>';
                 else if (rank === 3) rankIcon = '<i class="fas fa-medal text-orange-400"></i>';
                 else rankIcon = `<span class="font-bold text-gray-500">${rank}</span>`;
-                return `<div class="flex items-center bg-gray-50 p-4 rounded-lg hover:bg-gray-100 transition cursor-pointer" onclick="showUserProfile('${user.name}')"><div class="w-12 text-center text-xl">${rankIcon}</div><img src="${user.avatar}" alt="${user.name}" class="w-12 h-12 rounded-full mx-4"><p class="flex-grow font-bold text-lg text-gray-800">${user.name}</p><p class="text-blue-600 font-bold text-lg">${user.totalStudyTime.toFixed(1)} 시간</p></div>`;
+                const userLevel = getUserLevel(user.totalStudyTime, true);
+                return `<div class="flex items-center bg-gray-50 p-4 rounded-lg hover:bg-gray-100 transition cursor-pointer" onclick="showUserProfile('${user.name}')"><div class="w-12 text-center text-xl">${rankIcon}</div><img src="${user.avatar}" alt="${user.name}" class="w-12 h-12 rounded-full mx-4"><div class="flex-grow"><p class="font-bold text-lg text-gray-800">${user.name}</p><span class="text-xs font-semibold px-2 py-1 rounded-full ${userLevel.color} text-white">${userLevel.name}</span></div><p class="text-blue-600 font-bold text-lg">${user.totalStudyTime.toFixed(1)} 시간</p></div>`;
             }).join('');
             rankingPageEl.innerHTML = `<div class="bg-white p-8 rounded-xl shadow-sm"><h2 class="text-3xl font-bold mb-2">🏆 공부 시간 랭킹</h2><p class="text-gray-500 mb-8">꾸준함이 최고의 무기! 다른 분들과 함께 성장해보세요.</p><div class="space-y-3">${rankingListHtml}</div></div>`;
         }
@@ -327,12 +434,13 @@
                 const badge = allBadges.find(b => b.id === badgeId);
                 return `<div class="text-center" title="${badge.name} - ${badge.description}"><i class="fas ${badge.icon} ${badge.color} fa-2x mb-1"></i><p class="text-xs font-medium">${badge.name}</p></div>`;
             }).join('');
-            profilePageEl.innerHTML = `<div class="bg-white p-8 rounded-xl shadow-sm"><button onclick="showPage(previousPageId)" class="mb-6 text-blue-600 hover:underline"><i class="fas fa-arrow-left mr-2"></i>뒤로 가기</button><div class="flex flex-col items-center text-center"><img src="${user.avatar}" alt="${user.name}" class="w-32 h-32 rounded-full border-4 border-blue-300 mb-4"><h2 class="text-4xl font-bold">${user.name}</h2><p class="text-lg text-gray-500 mt-2">총 공부 시간: <span class="font-bold text-blue-600">${user.totalStudyTime.toFixed(1)}</span> 시간</p></div><div class="mt-10"><h3 class="text-xl font-bold mb-4 text-center">획득한 뱃지 (${user.acquiredBadges.length}개)</h3><div class="p-6 bg-gray-50 rounded-lg grid grid-cols-3 md:grid-cols-6 gap-4">${badgesHtml || '<p class="col-span-full text-center text-gray-500">아직 획득한 뱃지가 없습니다.</p>'}</div></div></div>`;
+            const userLevel = getUserLevel(user.totalStudyTime, true);
+            profilePageEl.innerHTML = `<div class="bg-white p-8 rounded-xl shadow-sm"><button onclick="showPage(previousPageId)" class="mb-6 text-blue-600 hover:underline"><i class="fas fa-arrow-left mr-2"></i>뒤로 가기</button><div class="flex flex-col items-center text-center"><img src="${user.avatar}" alt="${user.name}" class="w-32 h-32 rounded-full border-4 border-blue-300 mb-4"><div class="flex items-center gap-x-2"><h2 class="text-4xl font-bold">${user.name}</h2><span class="text-sm font-semibold px-3 py-1 rounded-full ${userLevel.color} text-white">${userLevel.name}</span></div><p class="text-lg text-gray-500 mt-2">총 공부 시간: <span class="font-bold text-blue-600">${user.totalStudyTime.toFixed(1)}</span> 시간</p></div><div class="mt-10"><h3 class="text-xl font-bold mb-4 text-center">획득한 뱃지 (${user.acquiredBadges.length}개)</h3><div class="p-6 bg-gray-50 rounded-lg grid grid-cols-3 md:grid-cols-6 gap-4">${badgesHtml || '<p class="col-span-full text-center text-gray-500">아직 획득한 뱃지가 없습니다.</p>'}</div></div></div>`;
         }
 
         function renderCreateRoomModal() {
             const modalEl = document.getElementById('createRoomModal');
-            modalEl.innerHTML = `<div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-md m-4"><h2 class="text-2xl font-bold mb-6">즉시 참여 모각코 만들기</h2><div class="space-y-4"><input id="newRoomTitleInput" type="text" placeholder="방 제목" class="w-full p-3 border rounded-lg"><input id="newRoomTagsInput" type="text" placeholder="태그 (쉼표로 구분. 예: React,알고리즘)" class="w-full p-3 border rounded-lg"><select id="newRoomTypeInput" class="w-full p-3 border rounded-lg"><option value="public">공개방</option><option value="private">비공개방</option></select><input id="newRoomPasswordInput" type="password" placeholder="비밀번호 (비공개방 선택 시)" class="w-full p-3 border rounded-lg hidden"><div class="flex items-center justify-between bg-gray-100 p-3 rounded-lg"><span class="font-medium"><i class="fas fa-clock mr-2"></i>뽀모도로 타이머 사용</span><label class="switch"><input id="newUsePomodoro" type="checkbox" checked><span class="slider"></span></label></div><div id="pomodoroSettings"><label class="block text-sm font-medium text-gray-700 mb-2">뽀모도로 설정</label><div class="flex space-x-2"><input id="newFocusTimeInput" type="number" value="25" class="w-full p-3 border rounded-lg" title="집중 시간(분)"><input id="newRestTimeInput" type="number" value="5" class="w-full p-3 border rounded-lg" title="휴식 시간(분)"></div></div><div><label class="block text-sm font-medium text-gray-700 mb-2">필수 규칙 설정</label><div class="space-y-3"><div class="flex items-center justify-between bg-gray-100 p-3 rounded-lg"><span class="font-medium"><i class="fas fa-microphone mr-2"></i>마이크 ON</span><label class="switch"><input id="newMicRequired" type="checkbox"><span class="slider"></span></label></div><div class="flex items-center justify-between bg-gray-100 p-3 rounded-lg"><span class="font-medium"><i class="fas fa-video mr-2"></i>캠 ON</span><label class="switch"><input id="newCamRequired" type="checkbox"><span class="slider"></span></label></div><div class="flex items-center justify-between bg-gray-100 p-3 rounded-lg"><span class="font-medium"><i class="fas fa-desktop mr-2"></i>화면 공유</span><label class="switch"><input id="newScreenRequired" type="checkbox"><span class="slider"></span></label></div></div></div></div><div class="mt-8 flex justify-end space-x-3"><button class="bg-gray-200 px-6 py-2 rounded-lg hover:bg-gray-300" onclick="closeCreateRoomModal()">취소</button><button class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700" onclick="createRoom()">생성하기</button></div></div>`;
+            modalEl.innerHTML = `<div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-md m-4"><h2 class="text-2xl font-bold mb-6">즉시 참여 모각코 만들기</h2><div class="space-y-4"><input id="newRoomTitleInput" type="text" placeholder="방 제목" class="w-full p-3 border rounded-lg"><input id="newRoomTagsInput" type="text" placeholder="태그 (쉼표로 구분. 예: React,알고리즘)" class="w-full p-3 border rounded-lg"><select id="newRoomTypeInput" class="w-full p-3 border rounded-lg"><option value="public">공개방</option><option value="private">비공개방</option></select><input id="newRoomPasswordInput" type="password" placeholder="비밀번호 (비공개방 선택 시)" class="w-full p-3 border rounded-lg hidden"><div><label class="block text-sm font-medium text-gray-700">시작 시간 (설정 시 예약)</label><input id="newScheduledTime" type="time" class="w-full p-2 border rounded-lg"></div><div class="flex items-center justify-between bg-gray-100 p-3 rounded-lg"><span class="font-medium"><i class="fas fa-clock mr-2"></i>뽀모도로 타이머 사용</span><label class="switch"><input id="newUsePomodoro" type="checkbox" checked><span class="slider"></span></label></div><div id="pomodoroSettings"><label class="block text-sm font-medium text-gray-700 mb-2">뽀모도로 설정</label><div class="flex space-x-2"><input id="newFocusTimeInput" type="number" value="25" class="w-full p-3 border rounded-lg" title="집중 시간(분)"><input id="newRestTimeInput" type="number" value="5" class="w-full p-3 border rounded-lg" title="휴식 시간(분)"></div></div><div class="flex items-center justify-between bg-gray-100 p-3 rounded-lg"><span class="font-medium"><i class="fas fa-user-check mr-2"></i>방장 수락 후 참여</span><label class="switch"><input id="newRequiresApproval" type="checkbox"><span class="slider"></span></label></div><div><label class="block text-sm font-medium text-gray-700 mb-2">필수 규칙 설정</label><div class="space-y-3"><div class="flex items-center justify-between bg-gray-100 p-3 rounded-lg"><span class="font-medium"><i class="fas fa-microphone mr-2"></i>마이크 ON</span><label class="switch"><input id="newMicRequired" type="checkbox"><span class="slider"></span></label></div><div class="flex items-center justify-between bg-gray-100 p-3 rounded-lg"><span class="font-medium"><i class="fas fa-video mr-2"></i>캠 ON</span><label class="switch"><input id="newCamRequired" type="checkbox"><span class="slider"></span></label></div><div class="flex items-center justify-between bg-gray-100 p-3 rounded-lg"><span class="font-medium"><i class="fas fa-desktop mr-2"></i>화면 공유</span><label class="switch"><input id="newScreenRequired" type="checkbox"><span class="slider"></span></label></div></div></div></div><div class="mt-8 flex justify-end space-x-3"><button class="bg-gray-200 px-6 py-2 rounded-lg hover:bg-gray-300" onclick="closeCreateRoomModal()">취소</button><button class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700" onclick="createRoom()">생성하기</button></div></div>`;
             document.getElementById('newRoomTypeInput').addEventListener('change', (e) => {
                 document.getElementById('newRoomPasswordInput').classList.toggle('hidden', e.target.value !== 'private');
             });
@@ -343,20 +451,7 @@
 
         function renderJoinRoomModal() {
             const modalEl = document.getElementById('joinRoomModal');
-            modalEl.innerHTML = `<div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-md m-4 relative"><button onclick="closeJoinModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-2xl leading-none">&times;</button><h2 class="text-2xl font-bold mb-2">모각코 입장</h2><p id="joinRoomTitle" class="text-gray-600 mb-4"></p><div class="space-y-4 mb-6"><div id="joinRoomParticipants" class="p-4 bg-gray-50 rounded-lg"><h4 class="font-bold text-gray-800 mb-2">현재 참여자</h4><div class="flex flex-wrap gap-2"></div></div>
-            <!-- UPDATED: 할 일 체크리스트 섹션으로 변경 -->
-            <div id="joinTodoSection" class="p-4 bg-gray-50 rounded-lg">
-                <div class="flex justify-between items-center mb-2">
-                    <h4 class="font-bold text-gray-800">오늘의 할 일</h4>
-                    <button class="text-sm bg-blue-100 text-blue-700 px-2 py-1 rounded-md hover:bg-blue-200" onclick="getAIRecommendations()">✨ AI 추천</button>
-                </div>
-                <div id="joinTodoList" class="space-y-2 max-h-24 overflow-y-auto mb-2"></div>
-                <div class="flex">
-                    <input id="joinTodoInput" type="text" placeholder="할 일 추가..." class="flex-grow border p-2 rounded-l-lg focus:outline-none">
-                    <button class="bg-gray-200 px-4 rounded-r-lg hover:bg-gray-300" onclick="addJoinTodo()">추가</button>
-                </div>
-            </div>
-            <div id="passwordSection" class="hidden"><label for="joinPasswordInput" class="block text-sm font-medium text-gray-700 mb-1">비밀번호</label><input id="joinPasswordInput" type="password" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"></div></div><div class="mt-8 flex justify-end"><button class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700" onclick="joinRoom()">입장하기</button></div></div>`;
+            modalEl.innerHTML = `<div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-md m-4 relative"><button onclick="closeJoinModal()" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-2xl leading-none">&times;</button><h2 class="text-2xl font-bold mb-2">모각코 입장</h2><p id="joinRoomTitle" class="text-gray-600 mb-4"></p><div class="space-y-4 mb-6"><div id="joinRoomParticipants" class="p-4 bg-gray-50 rounded-lg"><h4 class="font-bold text-gray-800 mb-2">현재 참여자</h4><div class="flex flex-wrap gap-2"></div></div><div id="joinPomodoroStatus" class="p-4 bg-gray-50 rounded-lg hidden"><h4 class="font-bold text-gray-800 mb-2">뽀모도로 현황</h4><p class="text-gray-600"></p></div><div id="joinTodoSection" class="p-4 bg-gray-50 rounded-lg"><div class="flex justify-between items-center mb-2"><h4 class="font-bold text-gray-800">오늘의 할 일</h4><button class="text-sm bg-blue-100 text-blue-700 px-2 py-1 rounded-md hover:bg-blue-200" onclick="getAIRecommendations()">✨ AI 추천</button></div><div id="joinTodoList" class="space-y-2 max-h-24 overflow-y-auto mb-2"></div><div class="flex"><input id="joinTodoInput" type="text" placeholder="할 일 추가..." class="flex-grow border p-2 rounded-l-lg focus:outline-none"><button class="bg-gray-200 px-4 rounded-r-lg hover:bg-gray-300" onclick="addJoinTodo()">추가</button></div></div><div id="passwordSection" class="hidden"><label for="joinPasswordInput" class="block text-sm font-medium text-gray-700 mb-1">비밀번호</label><input id="joinPasswordInput" type="password" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"></div></div><div class="mt-8 flex justify-end"><button id="joinRoomBtn" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700" onclick="joinRoom()">입장하기</button></div></div>`;
             document.getElementById('joinTodoInput').addEventListener('keypress', (e) => { if (e.key === 'Enter') addJoinTodo(); });
         }
         
@@ -372,7 +467,8 @@
                         </div>
                         <p class="text-gray-600 text-sm mb-4">${group.description}</p>
                         <p class="text-sm font-semibold text-gray-800 mb-2"><i class="far fa-calendar-alt mr-2"></i>${group.schedule}</p>
-                        <div class="flex flex-wrap gap-2">
+                        <p class="text-sm text-red-500 font-semibold"><i class="fas fa-fire mr-2"></i>모집 마감: ${group.recruitmentDeadline}</p>
+                        <div class="flex flex-wrap gap-2 mt-4">
                             ${group.tags.map(tag => `<span class="bg-gray-200 text-gray-700 text-xs px-2 py-1 rounded-md">#${tag}</span>`).join('')}
                         </div>
                     </div>
@@ -399,7 +495,29 @@
                 actionButton = `<button class="w-full bg-blue-600 text-white px-6 py-3 rounded-lg font-bold hover:bg-blue-700 transition" onclick="joinStudyGroup(${groupId})">가입 신청하기</button>`;
             }
             const historyHtml = group.history && group.history.length > 0 ? group.history.map(item => `<div class="bg-gray-50 p-4 rounded-lg"><div class="flex justify-between items-center"><p class="font-semibold text-gray-800">${item.date} - ${item.title}</p><span class="text-sm font-mono text-gray-500">${item.startTime} ~ ${item.endTime}</span></div><div class="flex flex-wrap items-center gap-2 mt-2"><span class="text-sm font-medium text-gray-600">참여자:</span>${item.participants.map(p => `<span class="text-sm bg-gray-200 text-gray-700 px-2 py-1 rounded-full">${p}</span>`).join('')}</div></div>`).join('') : '<p class="text-center text-gray-500">아직 활동 기록이 없습니다.</p>';
-            pageEl.innerHTML = `<div class="bg-white p-8 rounded-xl shadow-sm"><button onclick="showPage('lobby')" class="mb-6 text-blue-600 hover:underline"><i class="fas fa-arrow-left mr-2"></i>그룹 목록으로</button><div class="grid grid-cols-1 lg:grid-cols-3 gap-8"><div class="lg:col-span-2"><h2 class="text-3xl font-bold">${group.name}</h2><div class="flex flex-wrap gap-2 my-4">${group.tags.map(tag => `<span class="bg-gray-200 text-gray-700 text-sm px-3 py-1 rounded-full">#${tag}</span>`).join('')}</div><p class="text-gray-700 leading-relaxed mt-4">${group.description}</p></div><div class="space-y-4"><div class="p-4 bg-gray-50 rounded-lg"><h4 class="font-bold text-gray-800 mb-2">활동 시간</h4><p class="text-gray-600">${group.schedule}</p></div><div class="p-4 bg-gray-50 rounded-lg"><h4 class="font-bold text-gray-800 mb-2">멤버 (${group.members.length}/${group.maxMembers})</h4><div class="flex flex-wrap gap-2">${group.members.map(name => `<span class="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-sm">${name}</span>`).join('')}</div></div>${actionButton}</div></div><div class="mt-10 border-t pt-8"><h3 class="text-2xl font-bold mb-4">그룹 활동 히스토리 📜</h3><div class="space-y-4">${historyHtml}</div></div></div>`;
+            pageEl.innerHTML = `<div class="bg-white p-8 rounded-xl shadow-sm"><div class="flex justify-between items-center"><button onclick="showPage('lobby')" class="text-blue-600 hover:underline"><i class="fas fa-arrow-left mr-2"></i>그룹 목록으로</button><button class="text-gray-500 hover:text-blue-600" onclick="copyLinkToClipboard()"><i class="fas fa-link mr-2"></i>초대 링크 복사</button></div><div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-6"><div class="lg:col-span-2"><h2 class="text-3xl font-bold">${group.name}</h2><div class="flex flex-wrap gap-2 my-4">${group.tags.map(tag => `<span class="bg-gray-200 text-gray-700 text-sm px-3 py-1 rounded-full">#${tag}</span>`).join('')}</div><p class="text-gray-700 leading-relaxed mt-4">${group.description}</p></div><div class="space-y-4"><div class="p-4 bg-gray-50 rounded-lg"><h4 class="font-bold text-gray-800 mb-2">활동 시간</h4><p class="text-gray-600">${group.schedule}</p></div><div class="p-4 bg-gray-50 rounded-lg"><h4 class="font-bold text-gray-800 mb-2">모집 마감</h4><p class="text-red-600 font-semibold">${group.recruitmentDeadline}</p></div><div class="p-4 bg-gray-50 rounded-lg"><h4 class="font-bold text-gray-800 mb-2">멤버 (${group.members.length}/${group.maxMembers})</h4><div class="flex flex-wrap gap-2">${group.members.map(name => `<span class="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-sm">${name}</span>`).join('')}</div></div>${actionButton}</div></div><div class="mt-10 border-t pt-8"><h3 class="text-2xl font-bold mb-4">그룹 활동 히스토리 📜</h3><div class="space-y-4">${historyHtml}</div></div></div>`;
+        }
+        
+        function renderCreateGroupModal() {
+            const modalEl = document.getElementById('createGroupModal');
+            modalEl.innerHTML = `
+                <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-lg m-4">
+                    <h2 class="text-2xl font-bold mb-6">스터디 그룹 만들기</h2>
+                    <div class="space-y-4">
+                        <input id="newGroupName" type="text" placeholder="그룹 이름" class="w-full p-3 border rounded-lg">
+                        <textarea id="newGroupDesc" placeholder="그룹에 대해 설명해주세요." class="w-full p-3 border rounded-lg h-24"></textarea>
+                        <input id="newGroupSchedule" type="text" placeholder="활동 시간 (예: 매주 월,수 20:00 - 22:00)" class="w-full p-3 border rounded-lg">
+                        <input id="newGroupTags" type="text" placeholder="태그 (쉼표로 구분)" class="w-full p-3 border rounded-lg">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">모집 마감일</label>
+                            <input id="newGroupDeadline" type="date" class="w-full p-2 border rounded-lg">
+                        </div>
+                    </div>
+                    <div class="mt-8 flex justify-end space-x-3">
+                        <button class="bg-gray-200 px-6 py-2 rounded-lg hover:bg-gray-300" onclick="closeCreateGroupModal()">취소</button>
+                        <button class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700" onclick="createStudyGroup()">그룹 생성</button>
+                    </div>
+                </div>`;
         }
 
         // --- 페이지 네비게이션 ---
@@ -433,28 +551,98 @@
             document.getElementById(`content-${tabName}`).classList.remove('hidden');
             document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
             document.getElementById(`tab-${tabName}`).classList.add('active');
+            
+            const mainActionBtn = document.getElementById('main-action-btn');
+            if (tabName === 'groups') {
+                mainActionBtn.innerHTML = `<i class="fas fa-users mr-2"></i>스터디 그룹 만들기`;
+                mainActionBtn.onclick = openCreateGroupModal;
+            } else {
+                mainActionBtn.innerHTML = `<i class="fas fa-plus mr-2"></i>즉시 참여 모각코 만들기`;
+                mainActionBtn.onclick = openCreateRoomModal;
+            }
         }
 
         // --- 모달 관리 ---
         function openCreateRoomModal() { document.getElementById('createRoomModal').classList.remove('hidden'); }
         function closeCreateRoomModal() { document.getElementById('createRoomModal').classList.add('hidden'); }
+        function openCreateGroupModal() { document.getElementById('createGroupModal').classList.remove('hidden'); }
+        function closeCreateGroupModal() { document.getElementById('createGroupModal').classList.add('hidden'); }
         
         function openJoinModal(roomId) {
             const room = rooms.find(r => r.id === roomId);
             if (room) {
-                joinModalTodos = []; // 모달 열 때마다 투두리스트 초기화
+                joinModalTodos = [];
                 renderJoinModalTodoList();
                 document.getElementById('joinRoomTitle').textContent = `"${room.title}" 방에 입장합니다.`;
                 const participantsEl = document.getElementById('joinRoomParticipants').querySelector('div');
-                participantsEl.innerHTML = room.participants.map(p => `<span class="bg-gray-200 px-2 py-1 rounded-full text-sm font-medium text-gray-700">${p}</span>`).join('') || `<p class="text-sm text-gray-500">아직 참여자가 없습니다.</p>`;
+                participantsEl.innerHTML = room.participants.map(p => `<span class="bg-gray-200 px-2 py-1 rounded-full text-sm font-medium text-gray-700">${p.name}</span>`).join('') || `<p class="text-sm text-gray-500">아직 참여자가 없습니다.</p>`;
+                
+                const pomodoroStatusEl = document.getElementById('joinPomodoroStatus');
+                if (room.usePomodoro) {
+                    pomodoroStatusEl.classList.remove('hidden');
+                    const timerStatusPEl = pomodoroStatusEl.querySelector('p');
+                    if (room.timerState === 'running') {
+                        const minutes = Math.floor(room.timerCurrentTime / 60);
+                        const seconds = room.timerCurrentTime % 60;
+                        timerStatusPEl.innerHTML = `<span class="font-bold ${room.isFocusSession ? 'text-red-500' : 'text-green-500'}">${room.isFocusSession ? '집중' : '휴식'} 시간</span> 진행 중 (${minutes}:${String(seconds).padStart(2, '0')} 남음)`;
+                    } else { timerStatusPEl.textContent = '타이머 대기 중'; }
+                } else {
+                    pomodoroStatusEl.classList.add('hidden');
+                }
+
                 const passwordSection = document.getElementById('passwordSection');
                 passwordSection.classList.toggle('hidden', !room.isPrivate);
+                
+                const joinBtn = document.getElementById('joinRoomBtn');
+                if (room.requiresApproval) {
+                    joinBtn.textContent = '가입 신청';
+                } else {
+                    joinBtn.textContent = '입장하기';
+                }
+
                 document.getElementById('joinRoomModal').dataset.roomId = roomId;
                 document.getElementById('joinRoomModal').classList.remove('hidden');
             }
         }
         function closeJoinModal() { document.getElementById('joinRoomModal').classList.add('hidden'); }
         
+        function openReportModal(userName) {
+            document.getElementById('reportUserName').textContent = userName;
+            document.getElementById('reportModal').classList.remove('hidden');
+        }
+        function closeReportModal() {
+            document.getElementById('reportModal').classList.add('hidden');
+        }
+        function submitReport() {
+            alert('신고가 접수되었습니다. 검토 후 조치하겠습니다.');
+            closeReportModal();
+        }
+
+        function zoomInScreen(imageUrl) {
+            document.getElementById('zoomedImage').src = imageUrl;
+            document.getElementById('zoomModal').classList.remove('hidden');
+        }
+        function closeZoomModal() {
+            document.getElementById('zoomModal').classList.add('hidden');
+        }
+
+        function openBadgeModal() {
+            const container = document.getElementById('allBadgesContainer');
+            const currentUser = users.find(u => u.name === '지은');
+            container.innerHTML = allBadges.map(badge => {
+                const isAcquired = currentUser.acquiredBadges.includes(badge.id);
+                return `<div class="text-center p-4 rounded-lg ${isAcquired ? 'bg-white' : 'bg-gray-100'}">
+                            <i class="fas ${badge.icon} ${isAcquired ? badge.color : 'text-gray-300'} fa-3x mb-2"></i>
+                            <p class="font-bold text-sm">${badge.name}</p>
+                            <p class="text-xs text-gray-500 mt-1">${badge.description}</p>
+                        </div>`;
+            }).join('');
+            document.getElementById('badgeModal').classList.remove('hidden');
+        }
+        function closeBadgeModal() {
+            document.getElementById('badgeModal').classList.add('hidden');
+        }
+
         // --- 모각코(스터디방) 로직 ---
         function createRoom() {
             const usePomodoro = document.getElementById('newUsePomodoro').checked;
@@ -465,23 +653,31 @@
             if (isPrivate && !password) { alert('비공개방은 비밀번호를 설정해야 합니다.'); return; }
             const tagInput = document.getElementById('newRoomTagsInput').value;
             const tags = tagInput.split(',').map(tag => tag.trim()).filter(tag => tag);
-            const newRoom = { id: rooms.length + 1, title: document.getElementById('newRoomTitleInput').value || '새로운 스터디방', tags, members: 1, maxMembers: 6, isPrivate, password, usePomodoro, focusTime, restTime, rules: { mic: document.getElementById('newMicRequired').checked, cam: document.getElementById('newCamRequired').checked, screen: document.getElementById('newScreenRequired').checked, }, participants: ['지은'], scheduledTime: null, timerState: 'stopped', isFocusSession: true, timerCurrentTime: focusTime * 60, };
+            const newRoom = { id: rooms.length + 1, hostName: '지은', title: document.getElementById('newRoomTitleInput').value || '새로운 스터디방', tags, members: 1, maxMembers: 6, isPrivate, password, usePomodoro, focusTime, restTime, rules: { mic: document.getElementById('newMicRequired').checked, cam: document.getElementById('newCamRequired').checked, screen: document.getElementById('newScreenRequired').checked, }, participants: [{name: '지은', sessionTime: 0}], scheduledTime: document.getElementById('newScheduledTime').value || null, timerState: 'stopped', isFocusSession: true, timerCurrentTime: focusTime * 60, requiresApproval: document.getElementById('newRequiresApproval').checked, pendingMembers: [] };
             rooms.push(newRoom);
             closeCreateRoomModal();
             renderStudyRoom(newRoom.id);
         }
 
         function joinRoom() {
-            currentSessionTodos = [...joinModalTodos]; // 모달의 투두리스트를 세션 투두리스트로 복사
             const roomId = parseInt(document.getElementById('joinRoomModal').dataset.roomId);
             const room = rooms.find(r => r.id === roomId);
             if (room.isPrivate) {
                 const enteredPassword = document.getElementById('joinPasswordInput').value;
                 if (enteredPassword !== room.password) { alert('비밀번호가 일치하지 않습니다.'); return; }
             }
+            if (room.requiresApproval) {
+                if (!room.pendingMembers.includes('지은')) {
+                    room.pendingMembers.push('지은');
+                }
+                alert('가입 신청이 전송되었습니다. 방장의 수락을 기다려주세요.');
+                closeJoinModal();
+                return;
+            }
             if (room.members < room.maxMembers) {
+                currentSessionTodos = [...joinModalTodos];
                 room.members++;
-                room.participants.push('지은(나)');
+                room.participants.push({name: '지은(나)', sessionTime: 0});
                 closeJoinModal();
                 renderStudyRoom(roomId);
             } else { alert('방이 가득 찼습니다.'); closeJoinModal(); }
@@ -494,7 +690,52 @@
                 currentUser.studyHistory.unshift({ roomName: currentRoom.title, completedTodos: completedTodos });
             }
             currentSessionTodos = [];
-            if (currentRoom) { const room = rooms.find(r => r.id === currentRoom.id); if (room) { room.members--; const myIndex = room.participants.indexOf('지은(나)'); if (myIndex > -1) { room.participants.splice(myIndex, 1); } } currentRoom = null; renderRooms(); showPage('lobby'); } 
+            if (currentRoom) { 
+                const room = rooms.find(r => r.id === currentRoom.id); 
+                if (room) { 
+                    room.members--; 
+                    const myIndex = room.participants.findIndex(p => p.name === '지은(나)'); 
+                    if (myIndex > -1) { 
+                        room.participants.splice(myIndex, 1); 
+                    }
+                    if (room.members === 0) {
+                        const roomIndex = rooms.findIndex(r => r.id === currentRoom.id);
+                        if (roomIndex > -1) {
+                            rooms.splice(roomIndex, 1);
+                        }
+                    } else if (room.hostName === '지은') { // 방장이 나갈 경우
+                        room.hostName = room.participants[0].name; // 첫 번째 사람에게 위임
+                    }
+                } 
+                currentRoom = null; 
+                renderRooms(); 
+                showPage('lobby'); 
+            } 
+        }
+
+        function approveJoin(userName) {
+            if (!currentRoom) return;
+            const userIndex = currentRoom.pendingMembers.indexOf(userName);
+            if (userIndex > -1) {
+                currentRoom.pendingMembers.splice(userIndex, 1);
+                currentRoom.members++;
+                currentRoom.participants.push({ name: userName, sessionTime: 0 });
+                renderStudyRoom(currentRoom.id);
+            }
+        }
+        function rejectJoin(userName) {
+            if (!currentRoom) return;
+            const userIndex = currentRoom.pendingMembers.indexOf(userName);
+            if (userIndex > -1) {
+                currentRoom.pendingMembers.splice(userIndex, 1);
+                renderStudyRoom(currentRoom.id);
+            }
+        }
+        function delegateHost(userName) {
+            if (!currentRoom) return;
+            currentRoom.hostName = userName;
+            alert(`${userName}님에게 방장 권한을 위임했습니다.`);
+            renderStudyRoom(currentRoom.id);
         }
 
         // --- 투두리스트 관련 함수 ---
@@ -504,15 +745,18 @@
             container.innerHTML = '';
             currentSessionTodos.forEach((todo, index) => {
                 const todoEl = document.createElement('div');
-                todoEl.className = 'todo-item flex items-center bg-white p-2 rounded';
-                todoEl.innerHTML = `<input type="checkbox" id="todo-${index}" class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 mr-3" onchange="toggleTodo(${index})" ${todo.completed ? 'checked' : ''}><span>${todo.text}</span>`;
+                todoEl.className = `todo-item flex items-center bg-white p-2 rounded ${todo.isCurrent ? 'current' : ''}`;
+                todoEl.innerHTML = `
+                    <button class="mr-2 text-gray-400 hover:text-blue-600" onclick="setCurrentTodo(${index})"><i class="fas ${todo.isCurrent ? 'fa-pause-circle text-blue-600' : 'fa-play-circle'}"></i></button>
+                    <input type="checkbox" id="todo-${index}" class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 mr-3" onchange="toggleTodo(${index})" ${todo.completed ? 'checked' : ''}>
+                    <span>${todo.text}</span>`;
                 container.appendChild(todoEl);
             });
         }
         function addTodo() {
             const input = document.getElementById('todoInput');
             if (input && input.value.trim()) {
-                currentSessionTodos.push({ text: input.value.trim(), completed: false });
+                currentSessionTodos.push({ text: input.value.trim(), completed: false, isCurrent: false });
                 input.value = '';
                 renderTodoList();
             }
@@ -522,6 +766,13 @@
                 currentSessionTodos[index].completed = !currentSessionTodos[index].completed;
                 renderTodoList();
             }
+        }
+        function setCurrentTodo(index) {
+            currentSessionTodos.forEach((todo, i) => {
+                todo.isCurrent = (i === index) ? !todo.isCurrent : false;
+            });
+            renderTodoList();
+            renderStudyRoom(currentRoom.id); // Re-render to show current task status
         }
         
         function renderJoinModalTodoList() {
@@ -538,7 +789,7 @@
         function addJoinTodo() {
             const input = document.getElementById('joinTodoInput');
             if (input && input.value.trim()) {
-                joinModalTodos.push({ text: input.value.trim(), completed: false });
+                joinModalTodos.push({ text: input.value.trim(), completed: false, isCurrent: false });
                 input.value = '';
                 renderJoinModalTodoList();
             }
@@ -560,7 +811,7 @@
             }
             recommendations.forEach(rec => {
                 if (!joinModalTodos.some(t => t.text === rec)) {
-                    joinModalTodos.push({ text: rec, completed: false });
+                    joinModalTodos.push({ text: rec, completed: false, isCurrent: false });
                 }
             });
             renderJoinModalTodoList();
@@ -590,6 +841,47 @@
                 renderStudyGroupPage(groupId);
             }
         }
+        
+        function createStudyGroup() {
+            const newGroup = {
+                id: studyGroups.length + 1,
+                name: document.getElementById('newGroupName').value,
+                description: document.getElementById('newGroupDesc').value,
+                schedule: document.getElementById('newGroupSchedule').value,
+                tags: document.getElementById('newGroupTags').value.split(',').map(t => t.trim()),
+                recruitmentDeadline: document.getElementById('newGroupDeadline').value,
+                members: ['지은'],
+                maxMembers: 10,
+                history: []
+            };
+            studyGroups.push(newGroup);
+            users.find(u => u.name === '지은').joinedGroups.push(newGroup.id);
+            alert('스터디 그룹이 생성되었습니다.');
+            closeCreateGroupModal();
+            renderStudyGroups();
+        }
+
+        function getStudyTimeStyle(seconds) {
+            const hours = seconds / 3600;
+            if (hours >= 4) return 'bg-red-500 text-white';
+            if (hours >= 2) return 'bg-yellow-500 text-white';
+            if (hours >= 1) return 'bg-green-500 text-white';
+            if (hours >= 0.5) return 'bg-blue-500 text-white';
+            return 'bg-gray-500 text-white';
+        }
+
+        function getUserLevel(totalStudyTime, isForText) {
+            if (isForText) {
+                if (totalStudyTime >= 300) return { name: '고인물', color: 'bg-purple-600' };
+                if (totalStudyTime >= 200) return { name: '시니어', color: 'bg-red-500' };
+                if (totalStudyTime >= 100) return { name: '주니어', color: 'bg-blue-500' };
+                return { name: '코린이', color: 'bg-green-500' };
+            }
+            if (totalStudyTime >= 300) return `<i class="fas fa-crown text-purple-600 text-xs" title="레벨: 고인물"></i>`;
+            if (totalStudyTime >= 200) return `<span class="text-red-500 text-xs" title="레벨: 시니어"><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i></span>`;
+            if (totalStudyTime >= 100) return `<span class="text-blue-500 text-xs" title="레벨: 주니어"><i class="fas fa-circle"></i><i class="fas fa-circle"></i></span>`;
+            return `<i class="fas fa-circle text-green-500 text-xs" title="레벨: 코린이"></i>`;
+        }
 
         function sendChatMessage() { const chatInput = document.getElementById('chatInput'); const chatBox = document.getElementById('chatBox'); if (chatInput && chatInput.value.trim() !== '') { const msgEl = document.createElement('div'); msgEl.innerHTML = `<span class="font-bold text-blue-700">나:</span> ${chatInput.value}`; msgEl.className = 'text-sm mb-1'; chatBox.appendChild(msgEl); chatInput.value = ''; chatBox.scrollTop = chatBox.scrollHeight; } }
         function toggleTimer() { if (!currentRoom) return; if (currentRoom.timerState === 'running') { currentRoom.timerState = 'paused'; } else { currentRoom.timerState = 'running'; } updateTimerUI(); }
@@ -599,7 +891,10 @@
         // 전역 타이머 업데이트 루프
         setInterval(() => {
             rooms.forEach(room => {
-                if (room.timerState === 'running') {
+                if (room.timerState === 'running' || !room.usePomodoro) {
+                    room.participants.forEach(p => p.sessionTime++);
+                }
+                if (room.usePomodoro && room.timerState === 'running') {
                     if (room.timerCurrentTime > 0) { room.timerCurrentTime--; } 
                     else {
                         room.isFocusSession = !room.isFocusSession;
@@ -609,7 +904,7 @@
                     }
                 }
             });
-            if (currentRoom) { updateTimerUI(); }
+            if (currentRoom) { renderStudyRoom(currentRoom.id); }
             if (document.getElementById('lobby').classList.contains('active')) { renderRooms(); }
         }, 1000);
         
@@ -618,6 +913,7 @@
             initializeRooms();
             renderMyPage();
             renderCreateRoomModal();
+            renderCreateGroupModal();
             renderJoinRoomModal();
             renderRooms();
             renderStudyGroups();
